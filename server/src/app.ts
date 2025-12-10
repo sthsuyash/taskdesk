@@ -25,7 +25,7 @@ export function createApp({ container, apiRouter, allowedOrigins = [] }: AppOpti
     app.use(compression());
     app.use(express.json());
 
-    app.use(createAuthMiddleware(container.authService));
+    app.use(createAuthMiddleware());
 
     app.use('/api', apiRouter);
     app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));

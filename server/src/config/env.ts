@@ -6,12 +6,19 @@ if (!process.env.AUTH_COOKIE_NAME) {
     throw new Error('AUTH_COOKIE_NAME is required');
 }
 
+if (!process.env.JWT_SECRET) {
+    throw new Error('JWT_SECRET is required');
+}
+
 export const env = {
     port: Number(process.env.PORT || 8000),
     databaseUrl: process.env.DATABASE_URL || 'postgres://postgres:postgres@localhost:5434/taskdesk',
     allowedOrigins,
     authCookieName: process.env.AUTH_COOKIE_NAME,
     authCookieSecure: process.env.AUTH_COOKIE_SECURE === 'true',
+    jwtSecret: process.env.JWT_SECRET,
+    jwtAccessExpiry: process.env.JWT_ACCESS_EXPIRY || '15m',
+    jwtRefreshExpiry: process.env.JWT_REFRESH_EXPIRY || '7d',
     adminSeedEmail: process.env.ADMIN_SEED_EMAIL || 'admin@taskdesk.local',
     adminSeedPassword: process.env.ADMIN_SEED_PASSWORD || 'ChangeMe123!',
     supportSeedEmail: process.env.SUPPORT_SEED_EMAIL || 'support@taskdesk.local',

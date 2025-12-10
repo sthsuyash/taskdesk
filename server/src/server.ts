@@ -63,7 +63,6 @@ export async function startServer() {
     const server = createServer(app);
     const liveServer = createLiveServer({
         server,
-        authService: container.authService,
         sessionService: container.sessionService,
     });
 
