@@ -43,6 +43,7 @@ model User {
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   authSessions AuthSession[]
+  refreshTokens RefreshToken[]
   tasks        Task[]
   sessions    Session[]
   auditLogs    AuditLog[]
@@ -61,6 +62,20 @@ model AuthSession {
   expiresAt  DateTime
 
   @@index([userId])
+  @@index([expiresAt])
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expiresAt DateTime
+  revoked   Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([token])
   @@index([expiresAt])
 }
 
