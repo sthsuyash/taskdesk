@@ -1,35 +1,99 @@
 import { env } from '@/config/env';
+import { refreshTokens } from '@/services/authApi';
 
-const TOKEN_KEY = 'taskdesk_token';
+const ACCESS_TOKEN_KEY = 'taskdesk_access_token';
+const REFRESH_TOKEN_KEY = 'taskdesk_refresh_token';
 
-export function getAuthToken(): string | null {
-    return localStorage.getItem(TOKEN_KEY);
+let accessToken: string | null = null;
+
+export function getAccessToken(): string | null {
+    if (!accessToken) {
+        accessToken = localStorage.getItem(ACCESS_TOKEN_KEY);
+    }
+    return accessToken;
 }
 
-export function setAuthToken(token: string | null) {
+export function setAccessToken(token: string | null) {
+    accessToken = token;
     if (token) {
-        localStorage.setItem(TOKEN_KEY, token);
+        localStorage.setItem(ACCESS_TOKEN_KEY, token);
     } else {
-        localStorage.removeItem(TOKEN_KEY);
+        localStorage.removeItem(ACCESS_TOKEN_KEY);
     }
+}
+
+export function getRefreshToken(): string | null {
+    return localStorage.getItem(REFRESH_TOKEN_KEY);
+}
+
+export function setRefreshToken(token: string | null) {
+    if (token) {
+        localStorage.setItem(REFRESH_TOKEN_KEY, token);
+    } else {
+        localStorage.removeItem(REFRESH_TOKEN_KEY);
+    }
+}
+
+export function clearTokens() {
+    accessToken = null;
+    localStorage.removeItem(ACCESS_TOKEN_KEY);
+    localStorage.removeItem(REFRESH_TOKEN_KEY);
+}
+
+let isRefreshing = false;
+let refreshPromise: Promise<string | null> | null = null;
+
+async function tryRefreshToken(): Promise<string | null> {
+    if (isRefreshing) {
+        return refreshPromise;
+    }
+
+    isRefreshing = true;
+    refreshPromise = (async () => {
+        try {
+            const response = await refreshTokens();
+            setAccessToken(response.accessToken);
+            setRefreshToken(response.refreshToken);
+            return response.accessToken;
+        } catch {
+            clearTokens();
+            return null;
+        } finally {
+            isRefreshing = false;
+            refreshPromise = null;
+        }
+    })();
+
+    return refreshPromise;
 }
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     const url = path.startsWith('http') ? path : `${env.apiUrl}${path}`;
-    const authToken = getAuthToken();
+    const token = getAccessToken();
     const headers: Record<string, string> = {
         'Content-Type': 'application/json',
         ...(options.headers || {}),
     };
 
-    if (authToken) {
-        headers['Authorization'] = `Bearer ${authToken}`;
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
     }
 
-    const response = await fetch(url, {
+    let response = await fetch(url, {
         headers,
         ...options,
     });
+
+    if (response.status === 401 && getRefreshToken()) {
+        const newToken = await tryRefreshToken();
+        if (newToken) {
+            headers['Authorization'] = `Bearer ${newToken}`;
+            response = await fetch(url, {
+                headers,
+                ...options,
+            });
+        }
+    }
 
     if (!response.ok) {
         let message = `Request failed with status ${response.status}`;
