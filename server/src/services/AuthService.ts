@@ -1,8 +1,9 @@
 import { BadRequestError, ConflictError, UnauthorizedError } from '@/domain/errors/AppError';
 import { hashPassword, normalizeEmail, verifyPassword } from '@/lib/utils';
-import { AuthActor, AuthUser } from '@/models/auth.model';
+import { AuthUser } from '@/models/auth.model';
 import { AuthRepository } from '@/repositories/AuthRepository';
 import { UserRepository } from '@/repositories/UserRepository';
+import { signAccessToken, signRefreshToken, verifyRefreshToken, decodeToken } from '@/lib/jwt-utils';
 import { v4 as uuidv4 } from 'uuid';
 
 export class AuthService {
@@ -39,12 +40,21 @@ export class AuthService {
             roleId,
         });
 
-        return {
+        const authUser: AuthUser = {
             id: user.id,
             email: user.email,
             roleId: user.roleId,
-            createdAt: user.createdAt,
-            updatedAt: user.updatedAt,
+            createdAt: user.createdAt.getTime(),
+            updatedAt: user.updatedAt.getTime(),
+        };
+
+        const accessToken = signAccessToken(authUser);
+        const refreshToken = await this.createRefreshToken(user.id);
+
+        return {
+            user: authUser,
+            accessToken,
+            refreshToken,
         };
     }
 
@@ -61,46 +71,79 @@ export class AuthService {
             throw new UnauthorizedError('Invalid email or password');
         }
 
-        return {
+        const authUser: AuthUser = {
             id: user.id,
             email: user.email,
             roleId: user.roleId,
-            createdAt: user.createdAt,
-            updatedAt: user.updatedAt,
+            createdAt: user.createdAt.getTime(),
+            updatedAt: user.updatedAt.getTime(),
+        };
+
+        await this.authRepository.revokeAllUserRefreshTokens(user.id);
+
+        const accessToken = signAccessToken(authUser);
+        const refreshToken = await this.createRefreshToken(user.id);
+
+        return {
+            user: authUser,
+            accessToken,
+            refreshToken,
         };
     }
 
-    async createSession(userId: string) {
-        const sessionToken = uuidv4();
-        const expiresAt = Date.now() + 7 * 24 * 60 * 60 * 1000;
+    async refreshTokens(refreshToken: string) {
+        const payload = verifyRefreshToken(refreshToken);
+        
+        const storedToken = await this.authRepository.findRefreshToken(refreshToken);
+        if (!storedToken) {
+            throw new UnauthorizedError('Invalid refresh token');
+        }
 
-        await this.authRepository.createSession({
-            id: sessionToken,
+        const user = await this.userRepository.findById(payload.sub);
+        if (!user) {
+            throw new UnauthorizedError('User not found');
+        }
+
+        await this.authRepository.revokeRefreshToken(refreshToken);
+
+        const authUser: AuthUser = {
+            id: user.id,
+            email: user.email,
+            roleId: user.roleId,
+            createdAt: user.createdAt.getTime(),
+            updatedAt: user.updatedAt.getTime(),
+        };
+
+        const newAccessToken = signAccessToken(authUser);
+        const newRefreshToken = await this.createRefreshToken(user.id);
+
+        return {
+            user: authUser,
+            accessToken: newAccessToken,
+            refreshToken: newRefreshToken,
+        };
+    }
+
+    async logout(refreshToken?: string) {
+        if (refreshToken) {
+            await this.authRepository.revokeRefreshToken(refreshToken).catch(() => undefined);
+        }
+    }
+
+    private async createRefreshToken(userId: string): Promise<string> {
+        const jti = uuidv4();
+        const token = signRefreshToken(userId, jti);
+        
+        const decoded = decodeToken(token);
+        const expiresAt = new Date((decoded?.exp || 0) * 1000);
+
+        await this.authRepository.createRefreshToken({
+            id: uuidv4(),
             userId,
+            token,
             expiresAt,
         });
 
-        return sessionToken;
-    }
-
-    async getSession(sessionToken: string): Promise<AuthUser | null> {
-        const session = await this.authRepository.findSessionById(sessionToken);
-
-        if (!session) {
-            return null;
-        }
-
-        if (session.expiresAt < Date.now()) {
-            await this.authRepository.deleteSession(sessionToken).catch(() => undefined);
-            return null;
-        }
-
-        await this.authRepository.updateSessionLastSeen(sessionToken, Date.now());
-
-        return session.user;
-    }
-
-    async logout(sessionToken: string) {
-        await this.authRepository.deleteSession(sessionToken).catch(() => undefined);
+        return token;
     }
 }

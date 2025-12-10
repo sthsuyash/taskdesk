@@ -1,4 +1,4 @@
-import { getAuthTokenFromRequest } from '@/lib/auth-utils';
+import { getAuthTokenFromRequest, setAuthCookie, clearAuthCookie } from '@/lib/auth-utils';
 import { AuditService } from '@/services/AuditService';
 import { AuthService } from '@/services/AuthService';
 import { Request, Response } from 'express';
@@ -10,54 +10,72 @@ export class AuthHandler {
     ) {}
 
     async register(req: Request, res: Response) {
-        const user = await this.authService.register(req.body);
-        const sessionToken = await this.authService.createSession(user.id);
+        const result = await this.authService.register(req.body);
 
         await this.auditService.log({
-            userId: user.id,
+            userId: result.user.id,
             action: 'registered',
             entityType: 'User',
-            entityId: user.id,
-            details: { email: user.email },
+            entityId: result.user.id,
+            details: { email: result.user.email },
             ipAddress: req.ip || req.socket.remoteAddress || undefined,
             userAgent: req.headers['user-agent'],
         });
 
-        res.status(201).json({ user, token: sessionToken });
+        setAuthCookie(res, result.refreshToken);
+        res.status(201).json({
+            user: result.user,
+            accessToken: result.accessToken,
+            refreshToken: result.refreshToken,
+        });
     }
 
     async login(req: Request, res: Response) {
-        const user = await this.authService.login(req.body);
-        const sessionToken = await this.authService.createSession(user.id);
+        const result = await this.authService.login(req.body);
 
         await this.auditService.log({
-            userId: user.id,
+            userId: result.user.id,
             action: 'login',
-            entityType: 'AuthSession',
-            details: { email: user.email },
+            entityType: 'User',
+            details: { email: result.user.email },
             ipAddress: req.ip || req.socket.remoteAddress || undefined,
             userAgent: req.headers['user-agent'],
         });
 
-        res.json({ user, token: sessionToken });
+        setAuthCookie(res, result.refreshToken);
+        res.json({
+            user: result.user,
+            accessToken: result.accessToken,
+            refreshToken: result.refreshToken,
+        });
     }
 
     async logout(req: Request, res: Response) {
-        const token = getAuthTokenFromRequest(req);
-        if (token) {
-            const session = await this.authService.getSession(token);
-            if (session) {
-                await this.auditService.log({
-                    userId: session.id,
-                    action: 'logout',
-                    entityType: 'AuthSession',
-                    ipAddress: req.ip || req.socket.remoteAddress || undefined,
-                    userAgent: req.headers['user-agent'],
-                });
-            }
-            await this.authService.logout(token);
+        const refreshToken = getAuthTokenFromRequest(req);
+        
+        if (refreshToken) {
+            await this.authService.logout(refreshToken);
         }
+
+        clearAuthCookie(res);
         res.json({ ok: true });
+    }
+
+    async refresh(req: Request, res: Response) {
+        const refreshToken = getAuthTokenFromRequest(req);
+        
+        if (!refreshToken) {
+            return res.status(401).json({ error: 'Refresh token required' });
+        }
+
+        const result = await this.authService.refreshTokens(refreshToken);
+        
+        setAuthCookie(res, result.refreshToken);
+        res.json({
+            user: result.user,
+            accessToken: result.accessToken,
+            refreshToken: result.refreshToken,
+        });
     }
 
     async me(req: Request, res: Response) {

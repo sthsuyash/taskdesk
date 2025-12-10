@@ -1,15 +1,24 @@
 import { UnauthorizedError } from '@/domain/errors/AppError';
 import { getAuthTokenFromRequest } from '@/lib/auth-utils';
-import { AuthService } from '@/services/AuthService';
+import { verifyAccessToken } from '@/lib/jwt-utils';
 import { NextFunction, Request, Response } from 'express';
 
-export function createAuthMiddleware(authService: AuthService) {
-    return async (req: Request, res: Response, next: NextFunction) => {
+export function createAuthMiddleware() {
+    return (req: Request, res: Response, next: NextFunction) => {
         const token = getAuthTokenFromRequest(req);
+        
         if (token) {
-            const user = await authService.getSession(token);
-            if (user) {
-                req.user = user;
+            try {
+                const payload = verifyAccessToken(token);
+                req.user = {
+                    id: payload.sub,
+                    email: payload.email,
+                    roleId: payload.roleId,
+                    createdAt: 0,
+                    updatedAt: 0,
+                };
+            } catch {
+                // Invalid token - continue without user
             }
         }
         next();

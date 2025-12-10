@@ -10,6 +10,7 @@ export function createAuthRouter(handler: AuthHandler): Router {
     router.post('/register', asyncHandler(handler.register.bind(handler)));
     router.post('/login', loginRateLimiter, asyncHandler(handler.login.bind(handler)));
     router.post('/logout', asyncHandler(handler.logout.bind(handler)));
+    router.post('/refresh', asyncHandler(handler.refresh.bind(handler)));
     router.get('/me', requireAuth, asyncHandler(handler.me.bind(handler)));
 
     return router;

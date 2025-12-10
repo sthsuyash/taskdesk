@@ -1,6 +1,6 @@
 import { AuthSession } from '@/models/auth.model';
-import { AuthRepository } from '@/repositories/AuthRepository';
-import { AuthSession as PrismaAuthSession, PrismaClient, User as PrismaUser } from '@prisma/client';
+import { AuthRepository, RefreshTokenData } from '@/repositories/AuthRepository';
+import { AuthSession as PrismaAuthSession, PrismaClient, RefreshToken as PrismaRefreshToken, User as PrismaUser } from '@prisma/client';
 
 export class PrismaAuthRepository implements AuthRepository {
     constructor(private readonly prisma: PrismaClient) {}
@@ -54,12 +54,64 @@ export class PrismaAuthRepository implements AuthRepository {
     }
 
     async deleteSession(id: string): Promise<void> {
-        await this.prisma.authSession.delete({ where: { id } });
+        await this.prisma.authSession.delete({ where: { id } }).catch(() => undefined);
     }
 
     async deleteExpiredSessions(): Promise<void> {
         await this.prisma.authSession.deleteMany({
             where: { expiresAt: { lt: new Date() } },
+        });
+    }
+
+    async createRefreshToken(data: RefreshTokenData): Promise<void> {
+        await this.prisma.refreshToken.create({
+            data: {
+                id: data.id,
+                userId: data.userId,
+                token: data.token,
+                expiresAt: data.expiresAt,
+            },
+        });
+    }
+
+    async findRefreshToken(token: string): Promise<RefreshTokenData | null> {
+        const refreshToken = await this.prisma.refreshToken.findUnique({
+            where: { token },
+            include: { user: true },
+        });
+        if (!refreshToken || refreshToken.revoked || refreshToken.expiresAt < new Date()) {
+            return null;
+        }
+        return {
+            id: refreshToken.id,
+            userId: refreshToken.userId,
+            token: refreshToken.token,
+            expiresAt: refreshToken.expiresAt,
+        };
+    }
+
+    async revokeRefreshToken(token: string): Promise<void> {
+        await this.prisma.refreshToken.update({
+            where: { token },
+            data: { revoked: true },
+        }).catch(() => undefined);
+    }
+
+    async revokeAllUserRefreshTokens(userId: string): Promise<void> {
+        await this.prisma.refreshToken.updateMany({
+            where: { userId },
+            data: { revoked: true },
+        });
+    }
+
+    async deleteExpiredRefreshTokens(): Promise<void> {
+        await this.prisma.refreshToken.deleteMany({
+            where: {
+                OR: [
+                    { expiresAt: { lt: new Date() } },
+                    { revoked: true },
+                ],
+            },
         });
     }
 }

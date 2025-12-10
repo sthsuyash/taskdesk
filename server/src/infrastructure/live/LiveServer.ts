@@ -1,17 +1,17 @@
 import { env } from '@/config/env';
 import { parseCookies } from '@/lib/auth-utils';
-import { AuthService } from '@/services/AuthService';
+import { verifyAccessToken } from '@/lib/jwt-utils';
+import { AuthUser } from '@/models/auth.model';
 import { SessionService } from '@/services/SessionService';
 import type { Server } from 'http';
 import { type RawData, type WebSocket, WebSocketServer } from 'ws';
 
 interface LiveServerDependencies {
     server: Server;
-    authService: AuthService;
     sessionService: SessionService;
 }
 
-export function createLiveServer({ server, authService, sessionService }: LiveServerDependencies) {
+export function createLiveServer({ server, sessionService }: LiveServerDependencies) {
     const rooms = new Map<string, Set<WebSocket>>();
     const viewerBootstrapState = new Map<
         WebSocket,
@@ -51,7 +51,22 @@ export function createLiveServer({ server, authService, sessionService }: LiveSe
             const role = url.searchParams.get('role') || 'viewer';
 
             const token = parseCookies(req.headers.cookie)[env.authCookieName] || null;
-            const actor = token ? await authService.getSession(token) : null;
+            let actor: AuthUser | null = null;
+            
+            if (token) {
+                try {
+                    const payload = verifyAccessToken(token);
+                    actor = {
+                        id: payload.sub,
+                        email: payload.email,
+                        roleId: payload.roleId,
+                        createdAt: 0,
+                        updatedAt: 0,
+                    };
+                } catch {
+                    actor = null;
+                }
+            }
 
             if (!sessionId) {
                 ws.close(1008, 'Missing session param');
