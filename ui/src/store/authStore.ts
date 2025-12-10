@@ -1,4 +1,4 @@
-import { setAuthToken } from '@/services/apiClient';
+import { clearTokens, getAccessToken, setAccessToken, setRefreshToken } from '@/services/apiClient';
 import {
     getCurrentUser,
     login as loginRequest,
@@ -10,7 +10,6 @@ import { create } from 'zustand';
 
 interface AuthState {
     user: AuthUser | null;
-    token: string | null;
     loading: boolean;
     refreshUser: () => Promise<void>;
     login: (payload: LoginPayload) => Promise<AuthUser>;
@@ -20,10 +19,13 @@ interface AuthState {
 
 export const useAuthStore = create<AuthState>((set) => ({
     user: null,
-    token: null,
     loading: true,
 
     refreshUser: async () => {
+        if (!getAccessToken()) {
+            set({ user: null, loading: false });
+            return;
+        }
         try {
             const response = await getCurrentUser();
             set({ user: response.user, loading: false });
@@ -34,15 +36,17 @@ export const useAuthStore = create<AuthState>((set) => ({
 
     login: async (payload: LoginPayload) => {
         const response = await loginRequest(payload);
-        setAuthToken(response.token);
-        set({ user: response.user, token: response.token });
+        setAccessToken(response.accessToken);
+        setRefreshToken(response.refreshToken);
+        set({ user: response.user });
         return response.user;
     },
 
     register: async (payload: RegisterPayload) => {
         const response = await registerRequest(payload);
-        setAuthToken(response.token);
-        set({ user: response.user, token: response.token });
+        setAccessToken(response.accessToken);
+        setRefreshToken(response.refreshToken);
+        set({ user: response.user });
         return response.user;
     },
 
@@ -50,8 +54,8 @@ export const useAuthStore = create<AuthState>((set) => ({
         try {
             await logoutRequest();
         } finally {
-            setAuthToken(null);
-            set({ user: null, token: null });
+            clearTokens();
+            set({ user: null });
         }
     },
 }));

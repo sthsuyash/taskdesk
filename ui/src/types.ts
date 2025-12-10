@@ -55,7 +55,8 @@ export interface AuthUser {
 
 export interface AuthResponse {
     user: AuthUser;
-    token: string;
+    accessToken: string;
+    refreshToken: string;
 }
 
 export interface CurrentUserResponse {

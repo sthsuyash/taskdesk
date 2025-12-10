@@ -16,3 +16,7 @@ export function register(payload: RegisterPayload) {
 export function logout() {
     return apiClient.post<{ ok: true }>('/api/auth/logout', {});
 }
+
+export function refreshTokens() {
+    return apiClient.post<AuthResponse>('/api/auth/refresh', {});
+}
