@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>rrweb — Session Dashboard</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, sans-serif; background: #f5f5f0; color: #1a1a1a; }
+
+    header { background: #1a1a2e; color: white; padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between; }
+    header h1 { font-size: 18px; font-weight: 500; }
+    .header-actions { display: flex; gap: 10px; align-items: center; }
+    .header-actions a { color: #aaa; text-decoration: none; font-size: 13px; }
+    .header-actions a:hover { color: white; }
+
+    main { max-width: 1000px; margin: 2rem auto; padding: 0 1rem; }
+
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 1.5rem; }
+    .stat { background: white; border-radius: 10px; padding: 1rem 1.25rem; border: 1px solid #e8e8e8; }
+    .stat-label { font-size: 12px; color: #888; margin-bottom: 4px; }
+    .stat-value { font-size: 22px; font-weight: 600; color: #1a1a2e; }
+
+    .toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 1rem; }
+    .toolbar input { flex: 1; padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; }
+    .refresh-btn { padding: 8px 14px; border: 1px solid #ddd; border-radius: 6px; background: white; cursor: pointer; font-size: 13px; }
+    .refresh-btn:hover { background: #f0f0f0; }
+
+    table { width: 100%; background: white; border-radius: 10px; border: 1px solid #e8e8e8; border-collapse: collapse; overflow: hidden; }
+    thead { background: #f8f8f5; }
+    th { padding: 10px 14px; text-align: left; font-size: 12px; font-weight: 600; color: #666; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #e8e8e8; }
+    td { padding: 11px 14px; font-size: 13px; border-bottom: 1px solid #f0f0f0; vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #fafaf8; }
+
+    .session-id { font-family: monospace; font-size: 11px; color: #888; }
+    .url { max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #333; }
+    .event-count { display: inline-block; background: #e8f4fd; color: #1565c0; font-size: 11px; padding: 2px 7px; border-radius: 20px; font-weight: 500; }
+    .duration { color: #666; }
+
+    .actions { display: flex; gap: 6px; }
+    .btn-replay { padding: 4px 10px; background: #1a1a2e; color: white; border: none; border-radius: 5px; font-size: 12px; cursor: pointer; text-decoration: none; }
+    .btn-replay:hover { background: #2d2d4e; }
+    .btn-live { padding: 4px 10px; background: #e63946; color: white; border: none; border-radius: 5px; font-size: 12px; cursor: pointer; text-decoration: none; }
+    .btn-delete { padding: 4px 8px; background: white; color: #888; border: 1px solid #ddd; border-radius: 5px; font-size: 12px; cursor: pointer; }
+    .btn-delete:hover { color: #e63946; border-color: #e63946; }
+
+    .empty { text-align: center; padding: 3rem; color: #888; }
+    .empty a { color: #1a1a2e; }
+
+    .live-badge { display: inline-flex; align-items: center; gap: 4px; background: #fff0f0; color: #e63946; font-size: 11px; padding: 2px 7px; border-radius: 20px; }
+    .live-dot { width: 6px; height: 6px; background: #e63946; border-radius: 50%; animation: pulse 1.5s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>rrweb — Session Dashboard</h1>
+  <div class="header-actions">
+    <a href="/recorder/" target="_blank">Open demo page →</a>
+  </div>
+</header>
+
+<main>
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-label">Total sessions</div>
+      <div class="stat-value" id="stat-total">—</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Total events</div>
+      <div class="stat-value" id="stat-events">—</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Avg duration</div>
+      <div class="stat-value" id="stat-duration">—</div>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <input id="search" type="text" placeholder="Filter by URL or session ID…" oninput="renderTable()">
+    <button class="refresh-btn" onclick="loadSessions()">↻ Refresh</button>
+  </div>
+
+  <table id="sessions-table">
+    <thead>
+      <tr>
+        <th>Session ID</th>
+        <th>URL</th>
+        <th>Started</th>
+        <th>Duration</th>
+        <th>Events</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="sessions-body">
+      <tr><td colspan="6" class="empty">Loading sessions…</td></tr>
+    </tbody>
+  </table>
+</main>
+
+<script>
+  let allSessions = [];
+
+  function formatDuration(ms) {
+    if (ms < 1000) return ms + 'ms';
+    if (ms < 60000) return (ms / 1000).toFixed(1) + 's';
+    return Math.floor(ms / 60000) + 'm ' + Math.floor((ms % 60000) / 1000) + 's';
+  }
+
+  function formatTime(ts) {
+    return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  }
+
+  async function loadSessions() {
+    try {
+      const res = await fetch('/api/sessions');
+      const { sessions } = await res.json();
+      allSessions = sessions;
+      updateStats();
+      renderTable();
+    } catch (e) {
+      document.getElementById('sessions-body').innerHTML =
+        '<tr><td colspan="6" class="empty">Could not load sessions. Is the server running?</td></tr>';
+    }
+  }
+
+  function updateStats() {
+    document.getElementById('stat-total').textContent = allSessions.length;
+    const totalEvents = allSessions.reduce((s, x) => s + x.eventCount, 0);
+    document.getElementById('stat-events').textContent = totalEvents.toLocaleString();
+    const avgDur = allSessions.length
+      ? allSessions.reduce((s, x) => s + x.durationMs, 0) / allSessions.length
+      : 0;
+    document.getElementById('stat-duration').textContent = formatDuration(Math.round(avgDur));
+  }
+
+  function renderTable() {
+    const query = document.getElementById('search').value.toLowerCase();
+    const filtered = allSessions.filter(s =>
+      s.id.includes(query) || s.url.toLowerCase().includes(query)
+    );
+
+    if (filtered.length === 0) {
+      document.getElementById('sessions-body').innerHTML =
+        `<tr><td colspan="6" class="empty">
+          No sessions yet. <a href="/recorder/" target="_blank">Open the demo page</a> to start recording.
+        </td></tr>`;
+      return;
+    }
+
+    document.getElementById('sessions-body').innerHTML = filtered.map(s => `
+      <tr>
+        <td><span class="session-id">${s.id.slice(0, 8)}…</span></td>
+        <td><span class="url" title="${s.url}">${s.url}</span></td>
+        <td>${formatTime(s.startedAt)}</td>
+        <td class="duration">${formatDuration(s.durationMs)}</td>
+        <td><span class="event-count">${s.eventCount}</span></td>
+        <td>
+          <div class="actions">
+            <a class="btn-replay" href="/player/?session=${s.id}" target="_blank">▶ Replay</a>
+            <a class="btn-live" href="/player/?session=${s.id}&live=true" target="_blank">● Live</a>
+            <button class="btn-delete" onclick="deleteSession('${s.id}')">✕</button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  async function deleteSession(id) {
+    if (!confirm('Delete this session?')) return;
+    await fetch(`/api/sessions/${id}`, { method: 'DELETE' });
+    loadSessions();
+  }
+
+  // Auto-refresh every 5 seconds
+  loadSessions();
+  setInterval(loadSessions, 5000);
+</script>
+
+</body>
+</html>

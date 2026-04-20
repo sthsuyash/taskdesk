@@ -1,0 +1,460 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>rrweb — Demo Recorded Page</title>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: system-ui, sans-serif;
+        background: #f5f5f0;
+        color: #1a1a1a;
+      }
+
+      header {
+        background: #1a1a2e;
+        color: white;
+        padding: 1rem 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      header h1 {
+        font-size: 18px;
+        font-weight: 500;
+      }
+      .badge {
+        background: #e63946;
+        color: white;
+        font-size: 11px;
+        padding: 3px 8px;
+        border-radius: 20px;
+        animation: pulse 2s infinite;
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.6;
+        }
+      }
+
+      main {
+        max-width: 800px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+      }
+      .section {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border: 1px solid #e8e8e8;
+      }
+      h2 {
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        color: #333;
+      }
+      label {
+        display: block;
+        font-size: 13px;
+        color: #555;
+        margin-bottom: 4px;
+        margin-top: 12px;
+      }
+      input,
+      select,
+      textarea {
+        width: 100%;
+        padding: 8px 10px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 14px;
+        color: #333;
+        background: white;
+      }
+      textarea {
+        height: 80px;
+        resize: vertical;
+      }
+      button {
+        margin-top: 12px;
+        padding: 9px 18px;
+        border-radius: 6px;
+        border: none;
+        background: #1a1a2e;
+        color: white;
+        font-size: 14px;
+        cursor: pointer;
+      }
+      button:hover {
+        background: #2d2d4e;
+      }
+      .btn-secondary {
+        background: white;
+        color: #333;
+        border: 1px solid #ddd;
+      }
+      .btn-secondary:hover {
+        background: #f5f5f5;
+      }
+
+      .product-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+      }
+      .product {
+        border: 1px solid #e8e8e8;
+        border-radius: 8px;
+        padding: 1rem;
+        cursor: pointer;
+        transition:
+          border-color 0.15s,
+          transform 0.1s;
+      }
+      .product:hover {
+        border-color: #1a1a2e;
+        transform: translateY(-1px);
+      }
+      .product.selected {
+        border-color: #1a1a2e;
+        border-width: 2px;
+        background: #f0f0ff;
+      }
+      .product-name {
+        font-weight: 600;
+        font-size: 14px;
+      }
+      .product-price {
+        color: #e63946;
+        font-weight: 500;
+        margin-top: 4px;
+        font-size: 13px;
+      }
+
+      .log {
+        background: #1a1a2e;
+        color: #7affb0;
+        font-family: monospace;
+        font-size: 12px;
+        padding: 1rem;
+        border-radius: 8px;
+        height: 150px;
+        overflow-y: auto;
+      }
+      .log-entry {
+        margin-bottom: 3px;
+      }
+      .log-entry.error {
+        color: #ff6b6b;
+      }
+      .log-entry.info {
+        color: #74c0fc;
+      }
+
+      /* rr-block demo: this div will appear as gray box in replay */
+      .rr-block {
+        background: #ffeeba;
+        border: 1px dashed #f0ad4e;
+        padding: 8px;
+        border-radius: 6px;
+        font-size: 12px;
+        color: #856404;
+        text-align: center;
+      }
+
+      .session-id {
+        font-family: monospace;
+        font-size: 12px;
+        color: #888;
+        margin-top: 8px;
+      }
+      .test-controls {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+        margin-top: 12px;
+      }
+      .tiny {
+        font-size: 12px;
+        color: #666;
+        margin-top: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Demo Product Page</h1>
+      <span class="badge" id="rec-status">● REC</span>
+    </header>
+
+    <main>
+      <div class="section">
+        <h2>Choose a product</h2>
+        <p style="font-size: 13px; color: #666; margin-bottom: 1rem">
+          Click a product — rrweb captures your click and selection.
+        </p>
+        <div class="product-grid">
+          <div class="product" onclick="selectProduct(this, 'Widget Pro', 49)">
+            <div class="product-name">Widget Pro</div>
+            <div class="product-price">$49</div>
+          </div>
+          <div class="product" onclick="selectProduct(this, 'Widget Max', 99)">
+            <div class="product-name">Widget Max</div>
+            <div class="product-price">$99</div>
+          </div>
+          <div
+            class="product"
+            onclick="selectProduct(this, 'Widget Ultra', 149)"
+          >
+            <div class="product-name">Widget Ultra</div>
+            <div class="product-price">$149</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>Checkout form</h2>
+        <p style="font-size: 13px; color: #666; margin-bottom: 0.5rem">
+          Name and email are recorded. Password is
+          <strong>masked</strong> automatically by rrweb.
+        </p>
+
+        <label>Full name</label>
+        <input type="text" id="name" placeholder="Suyash Sharma" />
+
+        <label>Email</label>
+        <input type="email" id="email" placeholder="you@example.com" />
+
+        <label>Password — try typing here (will be *** in replay)</label>
+        <input type="password" id="password" placeholder="super secret" />
+
+        <label>Card number — blocked element (.rr-block)</label>
+        <div class="rr-block">
+          4242 4242 4242 4242 — this whole block is hidden in replay
+        </div>
+
+        <label>Notes</label>
+        <textarea placeholder="Any special instructions..."></textarea>
+
+        <button onclick="submitOrder()">Place order</button>
+        <button
+          class="btn-secondary"
+          onclick="triggerError()"
+          style="margin-left: 8px"
+        >
+          Trigger JS error
+        </button>
+      </div>
+
+      <div class="section">
+        <h2>Custom event tracking</h2>
+        <p style="font-size: 13px; color: #666; margin-bottom: 1rem">
+          These buttons call <code>window.rrwebTrack()</code> — custom business
+          events woven into the session timeline.
+        </p>
+        <button
+          onclick="trackEvent('viewed_pricing')"
+          style="margin-right: 8px; margin-top: 0"
+        >
+          Track: viewed_pricing
+        </button>
+        <button
+          onclick="trackEvent('opened_chat')"
+          style="margin-right: 8px; margin-top: 0"
+        >
+          Track: opened_chat
+        </button>
+        <button onclick="trackEvent('rage_click')" style="margin-top: 0">
+          Track: rage_click
+        </button>
+      </div>
+
+      <div class="section">
+        <h2>Live event log & test controls</h2>
+        <div class="log" id="log"></div>
+        <p class="session-id" id="session-display">Session ID: loading...</p>
+        <p class="session-id" id="transport-display">Transport: loading...</p>
+        <div class="test-controls">
+          <button onclick="openReplay()" style="margin-top: 0">
+            Open replay
+          </button>
+          <button onclick="openLive()" style="margin-top: 0">Open live</button>
+          <button
+            class="btn-secondary"
+            onclick="toggleTransport()"
+            style="margin-top: 0"
+          >
+            Toggle transport (HTTP/WS)
+          </button>
+          <button
+            class="btn-secondary"
+            onclick="startNewSession()"
+            style="margin-top: 0"
+          >
+            Start new session
+          </button>
+          <button
+            class="btn-secondary"
+            onclick="copySessionId()"
+            style="margin-top: 0"
+          >
+            Copy session ID
+          </button>
+          <button
+            class="btn-secondary"
+            onclick="clearSamplingDecision()"
+            style="margin-top: 0"
+          >
+            Reset sampling decision
+          </button>
+        </div>
+        <p class="tiny">
+          Tip: use WebSocket transport for real-time live mode and HTTP for
+          stable replay batch testing.
+        </p>
+        <a href="/dashboard/" target="_blank">
+          <button style="margin-top: 12px; background: #27ae60">
+            Open session dashboard →
+          </button>
+        </a>
+      </div>
+    </main>
+
+    <!-- The recorder snippet — this is all you add to a real page -->
+    <script src="/recorder/recorder.js"></script>
+
+    <script>
+      // ── Helpers ──────────────────────────────────────────────────────────────
+      function log(msg, type = "") {
+        const el = document.getElementById("log");
+        const div = document.createElement("div");
+        div.className = "log-entry " + type;
+        div.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+        el.appendChild(div);
+        el.scrollTop = el.scrollHeight;
+      }
+
+      // Show session ID once recorder assigns one
+      let announcedSession = null;
+
+      function refreshRecorderStatus() {
+        const id = sessionStorage.getItem("rrweb_session_id");
+        const cfg = window.rrwebRecorderConfig;
+        if (id) {
+          document.getElementById("session-display").textContent =
+            "Session ID: " + id;
+          if (announcedSession !== id) {
+            announcedSession = id;
+            log("Recording started. Session: " + id, "info");
+          }
+        }
+        if (cfg) {
+          document.getElementById("transport-display").textContent =
+            `Transport: ${cfg.transport.toUpperCase()} | Server: ${cfg.serverUrl}`;
+        }
+      }
+
+      refreshRecorderStatus();
+      setInterval(refreshRecorderStatus, 400);
+      window.addEventListener("rrweb:session", refreshRecorderStatus);
+
+      function requireSession() {
+        const id = sessionStorage.getItem("rrweb_session_id");
+        if (!id) {
+          alert("Session is not ready yet. Try again in 1-2 seconds.");
+          return null;
+        }
+        return id;
+      }
+
+      function openReplay() {
+        const id = requireSession();
+        if (!id) return;
+        window.open(`/player/?session=${encodeURIComponent(id)}`, "_blank");
+      }
+
+      function openLive() {
+        const id = requireSession();
+        if (!id) return;
+        window.open(
+          `/player/?session=${encodeURIComponent(id)}&live=true`,
+          "_blank",
+        );
+      }
+
+      function toggleTransport() {
+        const cfg = window.rrwebRecorderConfig;
+        if (!cfg) return;
+        const next = cfg.transport === "ws" ? "http" : "ws";
+        cfg.switchTransport(next);
+      }
+
+      function startNewSession() {
+        window.rrwebRecorderConfig?.startNewSession();
+      }
+
+      async function copySessionId() {
+        const id = requireSession();
+        if (!id) return;
+        try {
+          await navigator.clipboard.writeText(id);
+          log("Session ID copied to clipboard", "info");
+        } catch (e) {
+          log("Could not copy session ID", "error");
+        }
+      }
+
+      function clearSamplingDecision() {
+        window.rrwebRecorderConfig?.clearSamplingDecision();
+      }
+
+      // ── Product selection ────────────────────────────────────────────────────
+      function selectProduct(el, name, price) {
+        document
+          .querySelectorAll(".product")
+          .forEach((p) => p.classList.remove("selected"));
+        el.classList.add("selected");
+        log(`Product selected: ${name} ($${price})`);
+        window.rrwebTrack?.("product_selected", { name, price });
+      }
+
+      // ── Order submission ─────────────────────────────────────────────────────
+      function submitOrder() {
+        const name = document.getElementById("name").value;
+        log(`Order submitted by: ${name || "(no name)"}`);
+        window.rrwebTrack?.("order_submitted", {
+          name,
+          timestamp: Date.now(),
+        });
+        alert("Order placed! Check the dashboard to see your session.");
+      }
+
+      // ── Custom event shortcut ────────────────────────────────────────────────
+      function trackEvent(tag) {
+        window.rrwebTrack?.(tag, { page: location.pathname });
+        log(`Custom event: ${tag}`, "info");
+      }
+
+      // ── Error demo ───────────────────────────────────────────────────────────
+      function triggerError() {
+        log("Triggering JS error...", "error");
+        setTimeout(() => {
+          undefinedFunction(); // intentional ReferenceError
+        }, 100);
+      }
+    </script>
+  </body>
+</html>
