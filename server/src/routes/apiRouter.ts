@@ -9,6 +9,10 @@ interface ApiRouterDependencies {
 export function createApiRouter({ store, broadcastToViewers }: ApiRouterDependencies) {
     const router = Router();
 
+    router.get('/health', async (_req: Request, res: Response) => {
+        res.json({ status: 'ok' });
+    });
+
     router.post('/sessions', async (req: Request, res: Response) => {
         try {
             const result = await store.createSession({
@@ -63,8 +67,8 @@ export function createApiRouter({ store, broadcastToViewers }: ApiRouterDependen
         res.json({ tasks });
     });
 
-    router.post('/tasks', (req: Request, res: Response) => {
-        const result = store.createTask(req.body);
+    router.post('/tasks', async (req: Request, res: Response) => {
+        const result = await store.createTask(req.body);
         if ('error' in result) {
             return res.status(result.statusCode).json({ error: result.error });
         }

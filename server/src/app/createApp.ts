@@ -9,19 +9,18 @@ import compression from 'compression';
 import cors from 'cors';
 
 interface CreateAppOptions {
-    jsonLimit: string;
     apiRouter: Router;
     allowedOrigins?: string[];
 }
 
-export function createApp({ jsonLimit, apiRouter, allowedOrigins = [] }: CreateAppOptions) {
+export function createApp({ apiRouter, allowedOrigins = [] }: CreateAppOptions) {
     const app = express();
 
     app.use(cors({
         origin: allowedOrigins.length > 0 ? allowedOrigins : true,
     }));
     app.use(compression());
-    app.use(express.json({ limit: jsonLimit }));
+    app.use(express.json());
 
     app.use('/api', apiRouter);
 

@@ -29,9 +29,10 @@ export interface Store {
     listSessions(): Promise<SessionSummary[]>;
     deleteSession(sessionId: string): Promise<{ ok: true }>;
     listTasks(): Promise<Task[]>;
-    createTask(payload: TaskPayload):
-        | { task: Task; statusCode: 201 }
-        | { error: string; statusCode: number };
+    createTask(payload: TaskPayload): Promise<
+        { task: Task; statusCode: 201 }
+        | { error: string; statusCode: number }
+    >;
     updateTask(id: string, payload: TaskPayload): Promise<{ task: Task } | { error: string; statusCode: number }>;
     deleteTask(id: string): Promise<{ ok: true } | { error: string; statusCode: number }>;
     close(): Promise<void>;
@@ -222,7 +223,7 @@ export async function createStore({ connectionString }: StoreConfig): Promise<St
             return result.rows.map(mapTaskRow);
         },
 
-        createTask(payload) {
+        async createTask(payload) {
             const title = typeof payload.title === 'string' ? payload.title.trim() : '';
             const description = typeof payload.description === 'string' ? payload.description.trim() : '';
             const status: TaskStatus = payload.status === 'done' ? 'done' : 'todo';
@@ -242,7 +243,7 @@ export async function createStore({ connectionString }: StoreConfig): Promise<St
 
             return {
                 task: { id, title, description, status, createdAt: now.getTime(), updatedAt: now.getTime() },
-                statusCode: 201
+                statusCode: 201 as const
             };
         },
 
