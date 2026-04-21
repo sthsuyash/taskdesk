@@ -1,0 +1,29 @@
+# Event Types
+
+## Core Event Types
+
+| Type | Name | Description |
+|------|------|-------------|
+| 0 | DomContentLoaded | Page DOM ready |
+| 1 | Load | All resources loaded |
+| 2 | FullSnapshot | Complete DOM serialization |
+| 3 | IncrementalSnapshot | DOM mutations, interactions |
+| 4 | Meta | URL + viewport size |
+| 5 | Custom | Business events via `rrwebTrack()` |
+| 6 | Plugin | Plugin events |
+
+## IncrementalSnapshot Sources
+
+| Source | Name | Description |
+|--------|------|-------------|
+| 1 | MouseMove | Mouse movement |
+| 2 | MouseInteraction | Click, focus, blur, etc. |
+| 3 | Scroll | Page scroll |
+| 4 | ViewportResize | Window resize |
+| 5 | Input | Input field changes |
+| 6 | TouchMove | Touch events |
+| 7 | MediaInteraction | Audio/video events |
+| 8 | StyleSheetRule | CSS rule changes |
+| 9 | CanvasMutation | Canvas mutations |
+| 10 | Font | Font loading |
+| 12 | StyleDeclaration | Style property changes |

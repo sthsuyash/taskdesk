@@ -1,0 +1,83 @@
+# Recording Sessions
+
+## Installation
+
+```bash
+npm install @rrweb/record
+```
+
+## Basic Usage
+
+```js
+import { record } from '@rrweb/record';
+
+const SESSION_ID = 'your-session-id';
+const events = [];
+
+const stop = record({
+  emit(event) {
+    events.push(event);
+    if (events.length >= 50) flush();
+  },
+  maskInputOptions: { password: true },
+  sampling: { mousemove: 50, scroll: 150 },
+});
+
+async function flush() {
+  const batch = events.splice(0, events.length);
+  await fetch(`/api/sessions/${SESSION_ID}/events`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ events: batch }),
+  });
+}
+```
+
+## Configuration Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `emit` | function | required | Called for each event |
+| `maskInputOptions` | object | `{}` | Mask specific input types |
+| `sampling` | object | `{}` | Sampling rates |
+| `blockSelector` | string | - | CSS selector to block |
+
+## Batching
+
+The recorder buffers events and sends them in batches to reduce network requests:
+
+```js
+if (events.length >= 50) flush(); // send every 50 events
+```
+
+Remember to flush on page unload:
+
+```js
+window.addEventListener('beforeunload', () => flush());
+```
+
+## Sampling
+
+```js
+record({
+  sampling: {
+    mousemove: 50,  // sample 50% of mousemove events
+    scroll: 150,   // sample 1 in 150 scroll events
+  },
+});
+```
+
+## Force Recording
+
+Trigger recording on specific conditions:
+
+```js
+// After identifying a user
+sessionStorage.setItem('rrweb_record', '1');
+```
+
+Or automatically on errors:
+
+```js
+window.onerror = () => flush();
+```

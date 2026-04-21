@@ -1,0 +1,73 @@
+# Production Guide
+
+## Database
+
+The starter uses in-memory storage. For production, use PostgreSQL:
+
+```js
+import pg from 'pg';
+const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+
+// Schema
+await pool.query(`
+  CREATE TABLE sessions (
+    id UUID PRIMARY KEY,
+    url TEXT,
+    started_at TIMESTAMPTZ,
+    metadata JSONB
+  );
+  CREATE TABLE session_events (
+    id BIGSERIAL,
+    session_id UUID,
+    events JSONB,
+    created_at TIMESTAMPTZ
+  );
+`);
+```
+
+## Storage
+
+### PostgreSQL
+
+```js
+// Store events
+await pool.query(
+  'INSERT INTO session_events (session_id, events) VALUES ($1, $2)',
+  [sessionId, JSON.stringify(events)]
+);
+
+// Fetch events
+const rows = await pool.query(
+  'SELECT events FROM session_events WHERE session_id = $1 ORDER BY id',
+  [sessionId]
+);
+const allEvents = rows.rows.flatMap(r => r.events);
+```
+
+### S3 for Large Sessions
+
+```js
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+
+await s3.send(new PutObjectCommand({
+  Bucket: 'my-rrweb-sessions',
+  Key: `sessions/${sessionId}.json.gz`,
+  Body: gzip(JSON.stringify(events)),
+  ContentEncoding: 'gzip',
+}));
+```
+
+## Sampling
+
+Record a percentage of sessions:
+
+```js
+const SAMPLE_RATE = 0.1; // 10% of visitors
+const shouldRecord = Math.random() < SAMPLE_RATE;
+```
+
+## WebSocket Security
+
+- Use `wss://` (WebSocket Secure) in production
+- Ensure your proxy supports WebSocket upgrades
+- Consider adding authentication middleware

@@ -1,0 +1,63 @@
+# API Reference
+
+## REST Endpoints
+
+### Create Session
+
+```http
+POST /api/sessions
+```
+
+Response:
+```json
+{ "sessionId": "uuid" }
+```
+
+### Append Events
+
+```http
+POST /api/sessions/:id/events
+```
+
+Body:
+```json
+{ "events": [...] }
+```
+
+### Get Session Events
+
+```http
+GET /api/sessions/:id/events
+```
+
+### List Sessions
+
+```http
+GET /api/sessions
+```
+
+### Delete Session
+
+```http
+DELETE /api/sessions/:id
+```
+
+## WebSocket
+
+### Connect
+
+```
+ws://localhost:3000/live?session=<id>&role=viewer
+ws://localhost:3000/live?session=<id>&role=recorder
+```
+
+### Role: Recorder
+
+Send events:
+```json
+{ "type": "event", "data": {...} }
+```
+
+### Role: Viewer
+
+Receive events in real-time.

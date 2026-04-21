@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" fill="none">
+  <rect width="1200" height="630" fill="#000000"/>
+  <text x="100" y="280" font-family="system-ui" font-size="80" font-weight="bold" fill="#ffffff">rrweb</text>
+  <text x="100" y="360" font-family="system-ui" font-size="28" fill="#9ca3af">Session replay for the web</text>
+  <rect x="100" y="420" width="200" height="50" rx="8" fill="#2563eb"/>
+  <text x="160" y="455" font-family="system-ui" font-size="20" fill="#ffffff">Get Started</text>
+  <circle cx="1000" cy="315" r="120" fill="#1a1a1a"/>
+  <path d="M940 255h120v30H940zm0 60h90v30H940zm0 60h105v30H940z" fill="#ffffff"/>
+</svg>

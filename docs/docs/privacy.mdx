@@ -1,0 +1,62 @@
+# Privacy Controls
+
+## HTML Attributes
+
+### Block Elements
+
+Entirely hide elements from replay:
+
+```html
+<div class="rr-block">Credit card form</div>
+```
+
+Elements appear as gray boxes in replay.
+
+### Mask Text Content
+
+Replace text with asterisks:
+
+```html
+<span class="rr-mask">Sensitive text</span>
+```
+
+### Ignore Input Events
+
+Don't record input changes:
+
+```html
+<input class="rr-ignore" type="text">
+```
+
+## JavaScript Configuration
+
+### Mask Input Types
+
+```js
+record({
+  maskInputOptions: {
+    password: true,
+    email: true,
+    tel: true,
+  },
+});
+```
+
+### Block by Selector
+
+```js
+record({
+  blockSelector: '[data-private], .payment-info, #ssn-field',
+});
+```
+
+## Custom Event Tracking
+
+Track business events alongside DOM events:
+
+```js
+window.rrwebTrack('product_viewed', { productId: 'abc' });
+window.rrwebTrack('checkout_started', { cartTotal: 149 });
+```
+
+These appear as markers on the replay timeline.
