@@ -167,6 +167,10 @@ export function useSessionRecorder() {
         };
 
         const ensureSession = async (): Promise<string | null> => {
+            if (isCleanupRef.current || isUnmountedRef.current) {
+                return null;
+            }
+
             if (sessionIdRef.current) {
                 return sessionIdRef.current;
             }
@@ -176,6 +180,9 @@ export function useSessionRecorder() {
             }
 
             const createPromise = (async () => {
+                if (isCleanupRef.current || isUnmountedRef.current) {
+                    return null;
+                }
                 try {
                     const { sessionId: id } = await createSession();
                     sessionIdRef.current = id;
@@ -247,10 +254,19 @@ export function useSessionRecorder() {
             const batch = pendingEventsRef.current.splice(0, pendingEventsRef.current.length);
             liveSocketRef.current.send(JSON.stringify({ events: batch }));
         };
- 
-        const flush = (allowCreateSession = true) => flushToLiveSocket(allowCreateSession);
 
-const init = async () => {
+        const flush = async (allowCreateSession = true) => {
+            if (isCleanupRef.current || isUnmountedRef.current) {
+                return;
+            }
+            await flushToLiveSocket(allowCreateSession);
+        };
+
+        const init = async () => {
+            if (location.pathname !== '/') {
+                return;
+            }
+
             const startTime = performance.now();
             try {
                 const sid = await ensureSession();
