@@ -3,24 +3,30 @@
 ## Installation
 
 ```bash
-pnpm install
+# Install frontend dependencies
+cd ui && pnpm install
+
+# Install server dependencies
+cd server && pnpm install
 ```
 
 ## Development
 
 ```bash
-# Start both frontend and server
-pnpm dev
+# Start server (port 8000) - in one terminal
+cd server && pnpm dev
 
-# Or run individually
-pnpm dev:ui      # Frontend: http://localhost:5173
-pnpm dev:server  # Server: http://localhost:8000
+# Start frontend (port 5173) - in another terminal
+cd ui && pnpm dev
 ```
 
 ## Production Build
 
 ```bash
+# Build both frontend and server
 pnpm build
+
+# Start production server
 pnpm start
 ```
 

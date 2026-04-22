@@ -1,31 +1,43 @@
 # Production Guide
 
+## Environment Variables
+
+| Variable | Default | Description |
+|----------|----------|-------------|
+| `DATABASE_URL` | `postgres://postgres:postgres@localhost:5434/rrweb` | PostgreSQL connection string |
+| `PORT` | `8000` | Server port |
+
 ## Database
 
-The starter uses in-memory storage. For production, use PostgreSQL:
+The application uses PostgreSQL. The schema is created automatically on server startup:
 
-```js
-import pg from 'pg';
-const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+```sql
+CREATE TABLE sessions (
+  id TEXT PRIMARY KEY,
+  url TEXT DEFAULT 'unknown',
+  user_agent TEXT DEFAULT '',
+  started_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  last_event_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  event_count INTEGER DEFAULT 0
+);
 
-// Schema
-await pool.query(`
-  CREATE TABLE sessions (
-    id UUID PRIMARY KEY,
-    url TEXT,
-    started_at TIMESTAMPTZ,
-    metadata JSONB
-  );
-  CREATE TABLE session_events (
-    id BIGSERIAL,
-    session_id UUID,
-    events JSONB,
-    created_at TIMESTAMPTZ
-  );
-`);
+CREATE TABLE session_events (
+  id SERIAL PRIMARY KEY,
+  session_id TEXT NOT NULL,
+  events TEXT NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE CASCADE
+);
+
+CREATE TABLE tasks (
+  id TEXT PRIMARY KEY,
+  title TEXT NOT NULL,
+  description TEXT DEFAULT '',
+  status TEXT NOT NULL DEFAULT 'todo',
+  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
 ```
-
-## Storage
 
 ### PostgreSQL
 

@@ -42,6 +42,50 @@ GET /api/sessions
 DELETE /api/sessions/:id
 ```
 
+### List Tasks
+
+```http
+GET /api/tasks
+```
+
+Response:
+```json
+{ "tasks": [{ "id": "uuid", "title": "string", "description": "string", "status": "todo|done", "createdAt": timestamp, "updatedAt": timestamp }] }
+```
+
+### Create Task
+
+```http
+POST /api/tasks
+```
+
+Body:
+```json
+{ "title": "string", "description": "string", "status": "todo|done" }
+```
+
+Response (201):
+```json
+{ "task": { "id": "uuid", "title": "string", "description": "string", "status": "todo|done", ... } }
+```
+
+### Update Task
+
+```http
+PUT /api/tasks/:id
+```
+
+Body:
+```json
+{ "title": "string", "description": "string", "status": "todo|done" }
+```
+
+### Delete Task
+
+```http
+DELETE /api/tasks/:id
+```
+
 ## WebSocket
 
 ### Connect
