@@ -28,7 +28,7 @@ export function useSessionRecorder() {
     const reconnectAttemptsRef = useRef(0);
     const isUnmountedRef = useRef(false);
     const isCleanupRef = useRef(false);
-    // FIX #5: Track whether rrweb record() is active before allowing custom events
+    // Track whether rrweb record() is active before allowing custom events
     const isRecordingRef = useRef(false);
 
     const emitCustomEvent = useCallback((tag: string, payload: unknown) => {
@@ -209,7 +209,7 @@ export function useSessionRecorder() {
             return createPromise;
         };
 
-        // FIX #2: flushToLiveSocket is defined INSIDE useEffect so it closes over
+        // flushToLiveSocket is defined INSIDE useEffect so it closes over
         // the real `ensureSession` function — not a stale ref from mount time.
         const flushToLiveSocket = async (allowCreateSession = true) => {
             if (pendingEventsRef.current.length === 0) {
@@ -221,7 +221,7 @@ export function useSessionRecorder() {
                 return;
             }
 
-            // FIX #1 (continued): Only splice events when the socket is confirmed OPEN.
+            // Only splice events when the socket is confirmed OPEN.
             // If the socket is still CONNECTING, leave events in pendingEventsRef so
             // the `onopen` handler can flush them. This prevents the full snapshot
             // (and all early incremental events) from being silently discarded.

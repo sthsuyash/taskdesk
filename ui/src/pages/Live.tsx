@@ -20,7 +20,6 @@ interface ReplayerInstance {
     addEvent: (event: EventWithTime) => void;
     startLive: (baselineTime?: number) => void;
     play: (timeOffset?: number) => void;
-    // FIX #6: destroy() is the correct cleanup method for Replayer, not pause()
     destroy?: () => void;
 }
 
@@ -36,7 +35,7 @@ export default function Live() {
     const containerRef = useRef<HTMLDivElement>(null);
     const replayerRef = useRef<ReplayerInstance | null>(null);
     const playerReadyRef = useRef(false);
-    // FIX #3: Accumulate ALL incoming events across messages so that
+    // Accumulate ALL incoming events across messages so that
     // initializePlayer always has the full event history to find the
     // full snapshot in, even if the snapshot arrives in a later batch.
     const bufferedEventsRef = useRef<EventWithTime[]>([]);
@@ -83,7 +82,6 @@ export default function Live() {
             setError('');
             playerReadyRef.current = false;
             bufferedEventsRef.current = [];
-            // FIX #6: use destroy() instead of pause() for proper cleanup
             replayerRef.current?.destroy?.();
             replayerRef.current = null;
             if (containerRef.current) {
@@ -103,10 +101,9 @@ export default function Live() {
         setStatus('connecting');
         setError('');
         playerReadyRef.current = false;
-        // FIX #3: reset accumulated buffer when starting a new session
+        // reset accumulated buffer when starting a new session
         bufferedEventsRef.current = [];
 
-        // FIX #6: destroy() for proper cleanup
         replayerRef.current?.destroy?.();
         replayerRef.current = null;
         if (containerRef.current) {
@@ -209,7 +206,7 @@ export default function Live() {
                 const incomingEvents = payload.events as EventWithTime[];
 
                 if (!playerReadyRef.current) {
-                    // FIX #3: Accumulate events across ALL messages until we have a full snapshot.
+                    // Accumulate events across ALL messages until we have a full snapshot.
                     // Without this, if the snapshot wasn't in the very first batch,
                     // each subsequent call to initializePlayer only sees that batch's events
                     // and bails — the player never starts.
@@ -261,7 +258,6 @@ export default function Live() {
             }
             playerReadyRef.current = false;
             bufferedEventsRef.current = [];
-            // FIX #6: use destroy() instead of pause()
             replayerRef.current?.destroy?.();
             replayerRef.current = null;
         };

@@ -177,7 +177,7 @@ export default function Dashboard() {
                     return;
                 }
 
-                // FIX #4: Destroy the existing player AND clear the DOM before mounting
+                // Destroy the existing player AND clear the DOM before mounting
                 // the new player. Without the innerHTML clear here, the previous player's
                 // DOM nodes linger in containerRef even after $destroy(), causing the new
                 // rrweb-player to mount into a dirty container and potentially crash or
@@ -211,7 +211,7 @@ export default function Dashboard() {
         void render();
 
         return () => {
-            // FIX #4: Also clear the DOM in cleanup so a subsequent render doesn't
+            // Also clear the DOM in cleanup so a subsequent render doesn't
             // find leftover nodes from the destroyed player instance.
             if (playerRef.current?.$destroy) {
                 playerRef.current.$destroy();
