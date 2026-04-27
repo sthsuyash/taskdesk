@@ -1,0 +1,94 @@
+# Architecture
+
+TaskDesk is a full-stack task management app with session replay powered by rrweb.
+
+## System Overview
+
+```
+┌──────────────┐     ┌──────────────┐     ┌──────────────┐
+│  Landing   │     │    App     │     │ Dashboard │
+│ (marketing│────▶│ (customer) │────▶│  (admin)  │
+│   site)   │     │           │     │          │
+└────┬─────┘     └────┬─────┘     └────┬─────┘
+     │                 │               │
+     └────────────────┼───────────────┘
+                     ▼
+              ┌──────────────┐
+              │    Server    │
+              │ (API + WS)   │
+              └────┬─────┘
+                     ▼
+              ┌──────────────┐
+              │ PostgreSQL   │
+              └─────────────┘
+```
+
+## Tech Stack
+
+| Layer | Technology |
+| --- | --- |
+| Frontend | React 18, Vite, Tailwind CSS, Radix UI |
+| State | Zustand |
+| Backend | Node.js, Express, PostgreSQL |
+| Real-time | WebSocket |
+| Recording | @rrweb/record |
+
+## Components
+
+### Landing (`landing/`)
+Public marketing site at `/`. Built with React + Tailwind CSS.
+
+### App (`ui/`)
+Customer-facing application at `/`. Features:
+- User registration/login
+- Task management
+- Session recording
+
+### Dashboard (`dashboard/`)
+Admin console at `/dashboard`. Features:
+- Session replay viewer
+- User management
+- Task overview across users
+
+### Server (`server/`)
+Backend API at port 8000:
+- REST endpoints for CRUD operations
+- WebSocket server for live replay
+- PostgreSQL database
+
+## User Roles
+
+| Role | Capabilities |
+| --- | --- |
+| `user` | Create/manage own tasks, session recording |
+| `support` | View all sessions, manage users only (not other support/admin) |
+| `admin` | Full access to all features |
+
+## Database Schema
+
+### Users
+- `id` (TEXT, PRIMARY KEY)
+- `email` (TEXT, UNIQUE)
+- `role` (TEXT: 'user' | 'support' | 'admin')
+- `password_salt`, `password_hash` (TEXT)
+- `created_at`, `updated_at` (TIMESTAMP)
+
+### Sessions
+- `id` (TEXT, PRIMARY KEY)
+- `url`, `user_agent` (TEXT)
+- `user_id` (TEXT, FOREIGN KEY)
+- `started_at`, `last_event_at` (TIMESTAMP)
+- `event_count` (INTEGER)
+
+### Session Events
+- `id` (INTEGER, AUTO INCREMENT)
+- `session_id` (TEXT, FOREIGN KEY)
+- `events` (JSONB)
+- `created_at` (TIMESTAMP)
+
+### Tasks
+- `id` (TEXT, PRIMARY KEY)
+- `title`, `description` (TEXT)
+- `status` (TEXT: 'todo' | 'done')
+- `user_id` (TEXT, FOREIGN KEY)
+- `created_at`, `updated_at` (TIMESTAMP)
