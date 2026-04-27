@@ -1,6 +1,31 @@
-/* Default Docusaurus styles only */
+/* TaskDesk Docs Theme - Matching App Colors */
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 
 :root {
   --ifm-font-family-base: 'Poppins', system-ui, -apple-system, sans-serif;
+  
+  /* Matching app primary color */
+  --ifm-color-primary: #0d6e73;
+  --ifm-color-primary-dark: #0a5559;
+  --ifm-color-primary-darker: #09444a;
+  --ifm-color-primary-darkest: #07373d;
+  --ifm-color-primary-light: #10808a;
+  --ifm-color-primary-lighter: #118b95;
+  --ifm-color-primary-lightest: #13a0a7;
+  
+  --ifm-link-color: #0d6e73;
+  --ifm-link-hover-color: #10808a;
+}
+
+[data-theme='dark'] {
+  --ifm-color-primary: #13a0a7;
+  --ifm-color-primary-dark: #10808a;
+  --ifm-color-primary-darker: #0e757d;
+  --ifm-color-primary-darkest: #0d6e73;
+  --ifm-color-primary-light: #18b8bf;
+  --ifm-color-primary-lighter: #1bc2cc;
+  --ifm-color-primary-lightest: #22d1d9;
+  
+  --ifm-link-color: #13a0a7;
+  --ifm-link-hover-color: #18b8bf;
 }
