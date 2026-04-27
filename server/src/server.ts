@@ -33,7 +33,17 @@ export async function startServer() {
     }
     console.log('[DB] Database connected successfully');
 
-    const store = await createStore({ connectionString: env.databaseUrl });
+    const store = await createStore({
+        connectionString: env.databaseUrl,
+        bootstrapAdmin: {
+            email: env.adminSeedEmail,
+            password: env.adminSeedPassword,
+        },
+        bootstrapSupport: {
+            email: env.supportSeedEmail,
+            password: env.supportSeedPassword,
+        },
+    });
 
     let broadcastToViewers: (sessionId: string, events: unknown[]) => void = () => { };
     const apiRouter = createApiRouter({
@@ -66,7 +76,7 @@ export async function startServer() {
         return new Promise((resolve) => {
             server.listen(env.port, () => {
                 console.log(`
-rrweb server running on http://localhost:${env.port}
+TaskDesk server running on http://localhost:${env.port}
 Database: ${env.databaseUrl}
 
 API:

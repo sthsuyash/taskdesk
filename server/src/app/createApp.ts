@@ -18,6 +18,7 @@ export function createApp({ apiRouter, allowedOrigins = [] }: CreateAppOptions) 
 
     app.use(cors({
         origin: allowedOrigins.length > 0 ? allowedOrigins : true,
+        credentials: true,
     }));
     app.use(compression());
     app.use(express.json());
