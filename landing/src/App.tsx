@@ -23,67 +23,75 @@ const highlights = [
 
 export default function App() {
     return (
-        <div className="container py-7 md:py-10">
-            <header className="rounded-[1.8rem] border border-border/70 bg-card/80 p-5 shadow-[0_20px_70px_rgba(20,20,20,0.06)] backdrop-blur md:px-7 md:py-6">
-                <div className="flex flex-wrap items-center justify-between gap-4">
-                    <div>
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-muted-foreground">TaskDesk</p>
-                        <p className="mt-1 text-lg font-semibold tracking-tight">Task Management with Session Replay</p>
+        <div className="min-h-screen flex flex-col">
+            <header className="border-b bg-card/80 backdrop-blur sticky top-0 z-50">
+                <div className="container flex h-16 items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <p className="text-sm font-semibold tracking-tight">TaskDesk</p>
+                        <span className="text-xs text-muted-foreground border-l pl-3">Task Management with Session Replay</span>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex items-center gap-3">
                         <Link to="http://localhost:5174">
-                            <Button variant="outline">Open App</Button>
+                            <Button variant="ghost" size="sm">Open App</Button>
                         </Link>
                         <Link to="http://localhost:5175">
-                            <Button>Support Dashboard</Button>
+                            <Button size="sm">Support Dashboard</Button>
                         </Link>
                     </div>
                 </div>
             </header>
 
-            <section className="grid gap-5 pb-6 pt-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-stretch">
-                <Card className="bg-card/80 backdrop-blur">
-                    <CardHeader className="space-y-4">
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-muted-foreground">for support-driven products</p>
-                        <CardTitle className="max-w-[15ch] text-4xl leading-tight md:text-6xl">Understand users before jumping on a call.</CardTitle>
-                        <CardDescription className="max-w-[58ch] text-base leading-8">
+            <main className="flex-1">
+                <section className="container py-16 md:py-24">
+                    <div className="max-w-3xl mb-16">
+                        <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
+                            Understand users before jumping on a call.
+                        </h1>
+                        <p className="text-lg text-muted-foreground leading-relaxed max-w-2xl mb-8">
                             One focused landing, one customer app, one admin console. Keep each surface intentional while sharing a unified identity and event model.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent className="flex flex-wrap gap-3">
-                        <Link to="http://localhost:5174">
-                            <Button size="lg">
-                                Start in App
-                                <ArrowRight className="ml-2 h-4 w-4" />
-                            </Button>
-                        </Link>
-                        <Link to="http://localhost:5175">
-                            <Button size="lg" variant="outline">Go to Support Dashboard</Button>
-                        </Link>
-                    </CardContent>
-                </Card>
+                        </p>
+                        <div className="flex gap-3">
+                            <Link to="http://localhost:5174">
+                                <Button size="lg">
+                                    Start in App
+                                    <ArrowRight className="ml-2 h-4 w-4" />
+                                </Button>
+                            </Link>
+                            <Link to="http://localhost:5175">
+                                <Button size="lg" variant="outline">Support Dashboard</Button>
+                            </Link>
+                        </div>
+                    </div>
 
-                <div className="grid gap-4">
-                    {highlights.map((item) => {
-                        const Icon = item.icon;
-                        return (
-                            <Card key={item.title} className="bg-card/75 backdrop-blur">
-                                <CardHeader>
-                                    <CardTitle className="flex items-center gap-3 text-xl">
-                                        <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-primary/12 text-primary">
-                                            <Icon className="h-5 w-5" />
-                                        </span>
-                                        {item.title}
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <CardDescription className="text-sm leading-7">{item.description}</CardDescription>
-                                </CardContent>
-                            </Card>
-                        );
-                    })}
+                    <div className="grid md:grid-cols-3 gap-6">
+                        {highlights.map((item) => {
+                            const Icon = item.icon;
+                            return (
+                                <Card key={item.title} className="bg-card/50">
+                                    <CardHeader>
+                                        <CardTitle className="flex items-center gap-3 text-lg">
+                                            <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                                                <Icon className="h-4 w-4" />
+                                            </span>
+                                            {item.title}
+                                        </CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <CardDescription className="text-sm">{item.description}</CardDescription>
+                                    </CardContent>
+                                </Card>
+                            );
+                        })}
+                    </div>
+                </section>
+            </main>
+
+            <footer className="border-t bg-card/50 py-6">
+                <div className="container flex items-center justify-between text-sm text-muted-foreground">
+                    <p>TaskDesk - Built with rrweb</p>
+                    <p className="text-xs">© 2026</p>
                 </div>
-            </section>
+            </footer>
         </div>
     );
 }
