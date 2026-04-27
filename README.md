@@ -1,41 +1,44 @@
-# rrweb demo
+# TaskDesk
 
-Session replay built on [rrweb](https://www.rrweb.io/).
+Task management app with session replay powered by [rrweb](https://www.rrweb.io/).
 
-## Quick Start
+## Products
+
+| Product | Description |
+| --- | --- |
+| **Landing** | Marketing site |
+| **App** | Customer task management + session recording |
+| **Dashboard** | Admin/support console for sessions & users |
+| **Server** | REST API + live WebSocket |
+
+## Get Started
 
 ```bash
-# Install dependencies
-cd ui && pnpm install
-cd ../server && pnpm install
+# Install
+cd landing && pnpm install && cd ..
+cd ui && pnpm install && cd ..
+cd dashboard && pnpm install && cd ..
+cd server && pnpm install && cd ..
 
-# Start server (port 8000)
-cd server && pnpm dev
-
-# Start frontend (port 5173) - in another terminal
-cd ui && pnpm dev
+# Run
+cd server && pnpm dev       # localhost:8000
+cd ui && pnpm dev          # localhost:5173
+cd dashboard && pnpm dev    # localhost:5174
+cd landing && pnpm dev      # localhost:5175
 ```
 
-## Project Structure
+## Tech Stack
 
-```md
-rrweb/
-├── ui/       # React frontend (Vite + React Router)
-├── server/   # Express + WebSocket API server
-└── docs/     # Documentation
-```
+- **Frontend**: React, Vite, Tailwind CSS, Radix UI
+- **Backend**: Node.js, Express, PostgreSQL, WebSocket
+- **Recording**: @rrweb/record
 
-## API
+## User Roles
 
-| Method | Endpoint | Description |
-| --- | --- | --- |
-| POST | `/api/sessions` | Create session |
-| GET | `/api/sessions` | List sessions |
-| POST | `/api/sessions/:id/events` | Append events |
-| GET | `/api/sessions/:id/events` | Get session events |
-| DELETE | `/api/sessions/:id` | Delete session |
-| GET | `/api/tasks` | List tasks |
-| POST | `/api/tasks` | Create task |
-| PUT | `/api/tasks/:id` | Update task |
-| DELETE | `/api/tasks/:id` | Delete task |
-| WS | `/live` | Live replay |
+- **User** - Create/manage own tasks, session recording enabled
+- **Support** - View all sessions, manage users only
+- **Admin** - Full access to all features
+
+## License
+
+MIT
