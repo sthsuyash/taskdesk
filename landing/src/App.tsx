@@ -1,4 +1,4 @@
-import { ArrowRight, CirclePlay, LayoutDashboard, ShieldCheck } from 'lucide-react';
+import { ArrowRight, BookOpen, CirclePlay, LayoutDashboard, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
@@ -26,16 +26,18 @@ export default function App() {
         <div className="min-h-screen flex flex-col">
             <header className="border-b bg-card/80 backdrop-blur sticky top-0 z-50">
                 <div className="container flex h-16 items-center justify-between">
-                    <div className="flex items-center gap-3">
+                    <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
                         <p className="text-sm font-semibold tracking-tight">TaskDesk</p>
-                        <span className="text-xs text-muted-foreground border-l pl-3">Task Management with Session Replay</span>
-                    </div>
-                    <div className="flex items-center gap-3">
+                    </Link>
+                    <div className="flex items-center gap-2">
+                        <Link to="http://localhost:3000">
+                            <Button variant="ghost" size="sm">Docs</Button>
+                        </Link>
                         <Link to="http://localhost:5174">
-                            <Button variant="ghost" size="sm">Open App</Button>
+                            <Button variant="ghost" size="sm">App</Button>
                         </Link>
                         <Link to="http://localhost:5175">
-                            <Button size="sm">Support Dashboard</Button>
+                            <Button size="sm">Dashboard</Button>
                         </Link>
                     </div>
                 </div>
@@ -50,7 +52,7 @@ export default function App() {
                         <p className="text-lg text-muted-foreground leading-relaxed max-w-2xl mb-8">
                             One focused landing, one customer app, one admin console. Keep each surface intentional while sharing a unified identity and event model.
                         </p>
-                        <div className="flex gap-3">
+                        <div className="flex flex-wrap gap-3">
                             <Link to="http://localhost:5174">
                                 <Button size="lg">
                                     Start in App
@@ -58,7 +60,13 @@ export default function App() {
                                 </Button>
                             </Link>
                             <Link to="http://localhost:5175">
-                                <Button size="lg" variant="outline">Support Dashboard</Button>
+                                <Button size="lg" variant="outline">Dashboard</Button>
+                            </Link>
+                            <Link to="http://localhost:3000">
+                                <Button size="lg" variant="ghost">
+                                    <BookOpen className="mr-2 h-4 w-4" />
+                                    Documentation
+                                </Button>
                             </Link>
                         </div>
                     </div>
