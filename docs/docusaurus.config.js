@@ -3,15 +3,15 @@ import { themes as prismThemes } from 'prism-react-renderer';
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: 'rrweb',
-  tagline: 'Session replay for the web',
+  title: 'TaskDesk',
+  tagline: 'Task management with session replay',
   favicon: 'img/favicon.ico',
 
-  url: 'https://rrweb.example.com',
+  url: 'https://taskdesk.dev',
   baseUrl: '/',
 
-  organizationName: 'your-org',
-  projectName: 'rrweb',
+  organizationName: 'taskdesk',
+  projectName: 'taskdesk',
 
   onBrokenLinks: 'throw',
 
@@ -29,6 +29,9 @@ const config = {
           sidebarPath: './sidebars.js',
         },
         blog: false,
+        theme: {
+          customCss: './src/css/custom.css',
+        },
       }),
     ],
   ],
@@ -79,6 +82,11 @@ const config = {
             sidebarId: 'docsSidebar',
             position: 'left',
             label: 'Docs',
+          },
+          {
+            href: 'https://github.com/sthasuyash/taskdesk',
+            label: 'GitHub',
+            position: 'right',
           },
         ],
       },
