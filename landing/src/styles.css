@@ -1,0 +1,42 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 39 83% 96%;
+    --foreground: 22 29% 12%;
+    --card: 45 100% 98%;
+    --card-foreground: 22 29% 12%;
+    --primary: 189 75% 29%;
+    --primary-foreground: 49 100% 98%;
+    --secondary: 45 63% 92%;
+    --secondary-foreground: 23 26% 24%;
+    --muted: 45 52% 91%;
+    --muted-foreground: 27 14% 38%;
+    --border: 36 35% 81%;
+    --radius: 1rem;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply min-h-screen bg-background font-sans text-foreground antialiased;
+    background-image:
+      radial-gradient(
+        circle at 7% 0%,
+        rgba(255, 237, 205, 0.95),
+        transparent 36%
+      ),
+      radial-gradient(
+        circle at 94% 18%,
+        rgba(201, 241, 236, 0.78),
+        transparent 32%
+      ),
+      linear-gradient(180deg, #fffaf2 0%, #f4ecde 100%);
+  }
+}
