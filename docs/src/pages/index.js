@@ -35,10 +35,10 @@ function Hero() {
     <header className={styles.hero}>
       <div className="container">
         <div className={styles.heroContent}>
-          <Heading as="h1" className={styles.heroTitle}>rrweb</Heading>
-          <p className={styles.heroSubtitle}>Session replay for the web</p>
+          <Heading as="h1" className={styles.heroTitle}>TaskDesk</Heading>
+          <p className={styles.heroSubtitle}>Task management with session replay</p>
           <p className={styles.heroDescription}>
-            A complete solution for recording and replaying user interactions on your website.
+            A complete solution for managing tasks while recording user sessions for support and analytics.
             Built on the popular rrweb library.
           </p>
           <div className={styles.heroActions}>
@@ -78,7 +78,7 @@ function CodePreview() {
         <div className={styles.codeBlock}>
           <pre>
             {`# Install dependencies
-pnpm install
+cd ui && pnpm install
 
 # Start development
 pnpm dev
