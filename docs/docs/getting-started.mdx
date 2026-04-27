@@ -1,33 +1,240 @@
 # Getting Started
 
+This guide will help you get TaskDesk running locally.
+
+## Project Structure
+
+```
+taskdesk/
+├── landing/      # Marketing site
+├── ui/           # Main app (customers)
+├── dashboard/    # Admin console
+├── server/       # Backend API
+└── docs/         # Documentation
+```
+
 ## Installation
 
 ```bash
-# Install frontend dependencies
+# Install all dependencies
+cd landing && pnpm install
 cd ui && pnpm install
-
-# Install server dependencies
+cd dashboard && pnpm install
 cd server && pnpm install
+```
+
+## Database Setup
+
+Ensure PostgreSQL is running and accessible. Create a database:
+
+```bash
+createdb taskdesk
+```
+
+Copy the example environment file:
+
+```bash
+cp server/.env.example server/.env
+```
+
+Update `server/.env` with your database URL:
+
+```env
+DATABASE_URL=postgresql://user:password@localhost:5432/taskdesk
 ```
 
 ## Development
 
 ```bash
-# Start server (port 8000) - in one terminal
+# Terminal 1 - Backend (port 8000)
 cd server && pnpm dev
 
-# Start frontend (port 5173) - in another terminal
+# Terminal 2 - Customer app (port 5173)
 cd ui && pnpm dev
+
+# Terminal 3 - Dashboard (port 5174)
+cd dashboard && pnpm dev
+
+# Terminal 4 - Landing (port 5175)
+cd landing && pnpm dev
 ```
+
+## Access the Applications
+
+| Service | URL |
+| --- | --- |
+| Customer App | http://localhost:5173 |
+| Dashboard | http://localhost:5174 |
+| Landing | http://localhost:5175 |
+| API | http://localhost:8000 |
+
+## Create Your First Admin User
+
+When the server starts for the first time, it creates a default admin user based on environment variables:
+
+```bash
+# In server/.env
+ADMIN_SEED_EMAIL=admin@example.com
+ADMIN_SEED_PASSWORD=yourpassword
+```
+
+Restart the server to create the admin user.
+
+## Environment Variables
+
+### Server (.env)
+
+| Variable | Description | Default |
+| --- | --- | --- |
+| `PORT` | Server port | `8000` |
+| `DATABASE_URL` | PostgreSQL connection string | Required |
+| `SESSION_SECRET` | Session cookie secret | Auto-generated |
+| `ADMIN_SEED_EMAIL` | Bootstrap admin email | - |
+| `ADMIN_SEED_PASSWORD` | Bootstrap admin password | - |
+| `SUPPORT_SEED_EMAIL` | Bootstrap support email | - |
+| `SUPPORT_SEED_PASSWORD` | Bootstrap support password | - |
+
+### UI (.env)
+
+| Variable | Description | Default |
+| --- | --- | --- |
+| `VITE_API_URL` | Backend API URL | `http://localhost:8000` |
+| `VITE_LIVE_URL` | WebSocket URL | `ws://localhost:8000` |
+
+### Dashboard (.env)
+
+| Variable | Description | Default |
+| --- | --- | --- |
+| `VITE_API_URL` | Backend API URL | `http://localhost:8000` |
 
 ## Production Build
 
 ```bash
-# Build both frontend and server
-pnpm build
+# Build each project
+cd landing && pnpm build
+cd ui && pnpm build
+cd dashboard && pnpm build
+cd server && pnpm build
 
-# Start production server
-pnpm start
+# Build docs
+cd docs && pnpm build
 ```
 
-The production build serves the frontend at `/app` and the API at `http://localhost:8000`.
+## Next Steps
+
+- [Architecture](./architecture) - System design overview
+- [API Reference](./api) - Complete API documentation
+- [Recording](./recording) - How session recording works
+
+### 2. Database Setup
+
+Ensure PostgreSQL is running and accessible. Create a database:
+
+```bash
+createdb taskdesk
+```
+
+Copy the example environment file:
+
+```bash
+cp server/.env.example server/.env
+```
+
+Update `server/.env` with your database URL:
+
+```env
+DATABASE_URL=postgresql://user:password@localhost:5432/taskdesk
+```
+
+### 3. Start Development Servers
+
+Run each service in separate terminals:
+
+```bash
+# Terminal 1 - Backend API (port 8000)
+cd server && pnpm dev
+
+# Terminal 2 - Customer App (port 5173)
+cd ui && pnpm dev
+
+# Terminal 3 - Admin Dashboard (port 5174)
+cd dashboard && pnpm dev
+
+# Terminal 4 - Landing Page (port 5175)
+cd landing && pnpm dev
+```
+
+### 4. Access the Applications
+
+| Service | URL |
+| --- | --- |
+| Customer App | http://localhost:5173 |
+| Dashboard | http://localhost:5174 |
+| Landing | http://localhost:5175 |
+| API | http://localhost:8000 |
+
+## Create Your First Admin User
+
+When the server starts for the first time, it creates a default admin user based on environment variables:
+
+```bash
+# In server/.env
+RRWEB_ADMIN_EMAIL=admin@example.com
+RRWEB_ADMIN_PASSWORD=yourpassword
+```
+
+Restart the server to create the admin user.
+
+## Environment Variables
+
+### Server (.env)
+
+| Variable | Description | Default |
+| --- | --- | --- |
+| `PORT` | Server port | `8000` |
+| `DATABASE_URL` | PostgreSQL connection string | Required |
+| `SESSION_SECRET` | Session cookie secret | Auto-generated |
+| `RRWEB_ADMIN_EMAIL` | Bootstrap admin email | - |
+| `RRWEB_ADMIN_PASSWORD` | Bootstrap admin password | - |
+| `RRWEB_SUPPORT_EMAIL` | Bootstrap support email | - |
+| `RRWEB_SUPPORT_PASSWORD` | Bootstrap support password | - |
+
+### UI (.env)
+
+| Variable | Description | Default |
+| --- | --- | --- |
+| `VITE_API_URL` | Backend API URL | `http://localhost:8000` |
+| `VITE_LIVE_URL` | WebSocket URL | `ws://localhost:8000` |
+
+### Dashboard (.env)
+
+| Variable | Description | Default |
+| --- | --- | --- |
+| `VITE_API_URL` | Backend API URL | `http://localhost:8000` |
+
+## Production Build
+
+Build all applications:
+
+```bash
+# Build each project
+cd landing && pnpm build
+cd ui && pnpm build
+cd dashboard && pnpm build
+cd server && pnpm build
+
+# Build docs
+cd docs && pnpm build
+```
+
+Start the production server:
+
+```bash
+cd server && pnpm start
+```
+
+## Next Steps
+
+- [Architecture](./architecture) - System design overview
+- [API Reference](./api) - Complete API documentation
+- [Recording](./recording) - How session recording works

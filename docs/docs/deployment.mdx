@@ -4,7 +4,7 @@
 
 | Variable | Default | Description |
 |----------|----------|-------------|
-| `DATABASE_URL` | `postgres://postgres:postgres@localhost:5434/rrweb` | PostgreSQL connection string |
+| `DATABASE_URL` | `postgres://postgres:postgres@localhost:5434/taskdesk` | PostgreSQL connection string |
 | `PORT` | `8000` | Server port |
 
 ## Database
@@ -62,7 +62,7 @@ const allEvents = rows.rows.flatMap(r => r.events);
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 
 await s3.send(new PutObjectCommand({
-  Bucket: 'my-rrweb-sessions',
+  Bucket: 'my-taskdesk-sessions',
   Key: `sessions/${sessionId}.json.gz`,
   Body: gzip(JSON.stringify(events)),
   ContentEncoding: 'gzip',

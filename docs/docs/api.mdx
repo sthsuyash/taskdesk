@@ -1,107 +1,178 @@
 # API Reference
 
-## REST Endpoints
+Base URL: `http://localhost:8000`
 
-### Create Session
+## Authentication
 
-```http
-POST /api/sessions
+### POST /api/auth/register
+
+Create a new account.
+
+**Request:**
+
+```
+POST /api/auth/register
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "securepassword"
+}
 ```
 
-Response:
-```json
+**Response:**
+
+```
+{
+  "user": {
+    "id": "...",
+    "email": "user@example.com",
+    "role": "user",
+    "createdAt": 1700000000000
+  }
+}
+```
+
+### POST /api/auth/login
+
+Authenticate and receive session cookie.
+
+**Request:**
+
+```
+POST /api/auth/login
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "securepassword"
+}
+```
+
+### POST /api/auth/logout
+
+Sign out and clear session.
+
+**Response:**
+
+```
+{ "ok": true }
+```
+
+### GET /api/auth/me
+
+Get current authenticated user.
+
+**Response:**
+
+```
+{
+  "user": {
+    "id": "...",
+    "email": "user@example.com",
+    "role": "user"
+  }
+}
+```
+
+## Sessions
+
+### POST /api/sessions
+
+Create a new recording session. Requires authentication.
+
+**Request:**
+
+```
+POST /api/sessions
+Content-Type: application/json
+
+{
+  "url": "https://app.example.com",
+  "userAgent": "Mozilla/5.0..."
+}
+```
+
+**Response:**
+
+```
 { "sessionId": "uuid" }
 ```
 
-### Append Events
+### GET /api/sessions
 
-```http
-POST /api/sessions/:id/events
-```
+List sessions. Admin/support only.
 
-Body:
-```json
-{ "events": [...] }
-```
+**Query Parameters:**
 
-### Get Session Events
+- `page` - Page number (default: 1)
+- `limit` - Items per page (default: 20)
 
-```http
-GET /api/sessions/:id/events
-```
+### GET /api/sessions/:id/events
 
-### List Sessions
+Get session events. Requires session ownership or admin.
 
-```http
-GET /api/sessions
-```
+### POST /api/sessions/:id/events
 
-### Delete Session
+Append events to session.
 
-```http
-DELETE /api/sessions/:id
-```
+### DELETE /api/sessions/:id
 
-### List Tasks
+Delete session. Requires admin.
 
-```http
-GET /api/tasks
-```
+## Tasks
 
-Response:
-```json
-{ "tasks": [{ "id": "uuid", "title": "string", "description": "string", "status": "todo|done", "createdAt": timestamp, "updatedAt": timestamp }] }
-```
+### GET /api/tasks
 
-### Create Task
+List tasks for authenticated user.
 
-```http
-POST /api/tasks
-```
+### POST /api/tasks
 
-Body:
-```json
-{ "title": "string", "description": "string", "status": "todo|done" }
-```
+Create a new task.
 
-Response (201):
-```json
-{ "task": { "id": "uuid", "title": "string", "description": "string", "status": "todo|done", ... } }
-```
+### PUT /api/tasks/:id
 
-### Update Task
+Update task.
 
-```http
-PUT /api/tasks/:id
-```
+### DELETE /api/tasks/:id
 
-Body:
-```json
-{ "title": "string", "description": "string", "status": "todo|done" }
-```
+Delete task.
 
-### Delete Task
+## Users (Admin Only)
 
-```http
-DELETE /api/tasks/:id
-```
+### GET /api/users
+
+List users with pagination.
+
+### POST /api/users
+
+Create a new user (admin only).
+
+### PUT /api/users/:id
+
+Update user.
+
+### DELETE /api/users/:id
+
+Delete user.
 
 ## WebSocket
 
-### Connect
+### /live
 
-```
-ws://localhost:8000/live?session=<id>&role=viewer
-ws://localhost:8000/live?session=<id>&role=recorder
-```
+Live replay WebSocket endpoint.
 
-### Role: Recorder
+**Query Parameters:**
 
-Send events:
-```json
-{ "type": "event", "data": {...} }
-```
+- `session` - Session ID
+- `role` - Either `recorder` or `viewer`
 
-### Role: Viewer
+**Recorder Role:**
 
-Receive events in real-time.
+- Sends events in real-time
+- Authenticates via session ownership
+
+**Viewer Role:**
+
+- Receives events in real-time
+- Can view live playback
