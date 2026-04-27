@@ -1,7 +1,13 @@
 // @ts-check
 import { themes as prismThemes } from 'prism-react-renderer';
+import dotenv from 'dotenv';
+
+// Load .env file
+dotenv.config({ path: '.env' });
 
 /** @type {import('@docusaurus/types').Config} */
+const appUrl = process.env.VITE_APP_URL || 'http://localhost:5174';
+
 const config = {
   title: 'TaskDesk',
   tagline: 'Task management with session replay',
@@ -14,6 +20,10 @@ const config = {
   projectName: 'taskdesk',
 
   onBrokenLinks: 'throw',
+
+  customFields: {
+    appUrl,
+  },
 
   i18n: {
     defaultLocale: 'en',

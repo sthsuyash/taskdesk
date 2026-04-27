@@ -3,6 +3,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
 
+const APP_URL = import.meta.env.VITE_APP_URL || 'http://localhost:5174';
+const DASHBOARD_URL = import.meta.env.VITE_DASHBOARD_URL || 'http://localhost:5175';
+const DOCS_URL = import.meta.env.VITE_DOCS_URL || 'http://localhost:3000';
+
 const highlights = [
     {
         title: 'Capture Every Customer Journey',
@@ -25,21 +29,10 @@ export default function App() {
     return (
         <div className="min-h-screen flex flex-col">
             <header className="border-b bg-card/80 backdrop-blur sticky top-0 z-50">
-                <div className="container flex h-16 items-center justify-between">
-                    <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-                        <p className="text-sm font-semibold tracking-tight">TaskDesk</p>
+                <div className="container flex h-16 items-center">
+                    <Link to="/" className="text-sm font-semibold tracking-tight hover:opacity-80 transition-opacity">
+                        TaskDesk
                     </Link>
-                    <div className="flex items-center gap-2">
-                        <Link to="http://localhost:3000">
-                            <Button variant="ghost" size="sm">Docs</Button>
-                        </Link>
-                        <Link to="http://localhost:5174">
-                            <Button variant="ghost" size="sm">App</Button>
-                        </Link>
-                        <Link to="http://localhost:5175">
-                            <Button size="sm">Dashboard</Button>
-                        </Link>
-                    </div>
                 </div>
             </header>
 
@@ -53,16 +46,16 @@ export default function App() {
                             One focused landing, one customer app, one admin console. Keep each surface intentional while sharing a unified identity and event model.
                         </p>
                         <div className="flex flex-wrap gap-3">
-                            <Link to="http://localhost:5174">
+                            <Link to={APP_URL}>
                                 <Button size="lg">
                                     Start in App
                                     <ArrowRight className="ml-2 h-4 w-4" />
                                 </Button>
                             </Link>
-                            <Link to="http://localhost:5175">
+                            <Link to={DASHBOARD_URL}>
                                 <Button size="lg" variant="outline">Dashboard</Button>
                             </Link>
-                            <Link to="http://localhost:3000">
+                            <Link to={DOCS_URL}>
                                 <Button size="lg" variant="ghost">
                                     <BookOpen className="mr-2 h-4 w-4" />
                                     Documentation

@@ -1,5 +1,5 @@
 .homeMain {
-  background: linear-gradient(180deg, #fffdf8 0%, #faf9f6 50%, #f5f3ee 100%);
+  background: #faf9f6;
   min-height: 100vh;
 }
 
@@ -18,20 +18,20 @@
   font-weight: 700;
   letter-spacing: -0.03em;
   line-height: 1.1;
-  color: var(--ifm-color-primary);
+  color: #0d6e73;
 }
 
 .heroSubtitle {
   margin: 0 0 1rem;
   font-size: clamp(1rem, 2vw, 1.25rem);
-  color: var(--ifm-color-emphasis-600);
+  color: #525252;
   font-weight: 500;
 }
 
 .heroDescription {
   margin-bottom: 2rem;
   max-width: 40rem;
-  color: var(--ifm-color-emphasis-600);
+  color: #525252;
   font-size: 1.05rem;
   line-height: 1.7;
 }
@@ -42,21 +42,44 @@
   gap: 0.75rem;
 }
 
-.heroActions .button {
+.heroActions a {
   padding: 0.75rem 1.5rem;
   font-weight: 600;
   border-radius: 0.5rem;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+
+.heroActions .button--primary {
+  background: #0d6e73;
+  color: #ffffff;
+  border: 1px solid #0d6e73;
+}
+
+.heroActions .button--primary:hover {
+  background: #09444a;
+}
+
+.heroActions .button--secondary {
+  background: #f5f5f5;
+  color: #1a1a1a;
+  border: 1px solid #e5e5e5;
+}
+
+.heroActions .button--secondary:hover {
+  background: #e5e5e5;
 }
 
 .heroActions .button--ghost {
   background: transparent;
-  border: 1px solid var(--ifm-color-emphasis-300);
-  color: var(--ifm-color-emphasis-700);
+  border: 1px solid #0d6e73;
+  color: #0d6e73;
 }
 
 .heroActions .button--ghost:hover {
-  border-color: var(--ifm-color-primary);
-  color: var(--ifm-color-primary);
+  background: #0d6e73;
+  color: #ffffff;
 }
 
 .section {
@@ -72,14 +95,14 @@
 .featureCard {
   height: 100%;
   padding: 1.5rem;
-  background: var(--ifm-color-emphasis-white);
-  border: 1px solid var(--ifm-color-emphasis-200);
+  background: #ffffff;
+  border: 1px solid #e5e5e5;
   border-radius: 0.5rem;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: all 0.2s ease;
 }
 
 .featureCard:hover {
-  border-color: var(--ifm-color-primary);
+  border-color: #0d6e73;
   box-shadow: 0 4px 12px rgba(13, 110, 115, 0.1);
   cursor: pointer;
 }
@@ -88,11 +111,12 @@
   margin-bottom: 0.5rem;
   font-size: 1.125rem;
   font-weight: 600;
+  color: #1a1a1a;
 }
 
 .featureDescription {
   margin: 0;
-  color: var(--ifm-color-emphasis-600);
+  color: #525252;
   line-height: 1.6;
 }
 
@@ -104,6 +128,7 @@
 
   .heroActions {
     flex-direction: column;
+    align-items: flex-start;
   }
 
   .section {
