@@ -42,7 +42,7 @@
   gap: 0.75rem;
 }
 
-.heroActions a {
+.heroActions a.button {
   padding: 0.75rem 1.5rem;
   font-weight: 600;
   border-radius: 0.5rem;
@@ -52,34 +52,38 @@
 }
 
 .heroActions .button--primary {
-  background: #0d6e73;
-  color: #ffffff;
-  border: 1px solid #0d6e73;
+  background: #0d6e73 !important;
+  color: #ffffff !important;
+  border: 1px solid #0d6e73 !important;
 }
 
 .heroActions .button--primary:hover {
-  background: #09444a;
+  background: #09444a !important;
 }
 
 .heroActions .button--secondary {
-  background: #f5f5f5;
-  color: #1a1a1a;
-  border: 1px solid #e5e5e5;
+  background: #f5f5f5 !important;
+  color: #1a1a1a !important;
+  border: 1px solid #e5e5e5 !important;
 }
 
 .heroActions .button--secondary:hover {
-  background: #e5e5e5;
+  background: #e5e5e5 !important;
 }
 
-.heroActions .button--ghost {
-  background: transparent;
-  border: 1px solid #0d6e73;
-  color: #0d6e73;
+[data-theme='dark'] .heroActions .button--primary {
+  background: #13a0a7 !important;
+  border-color: #13a0a7 !important;
 }
 
-.heroActions .button--ghost:hover {
-  background: #0d6e73;
-  color: #ffffff;
+[data-theme='dark'] .heroActions .button--secondary {
+  background: #333333 !important;
+  color: #ffffff !important;
+  border-color: #444444 !important;
+}
+
+[data-theme='dark'] .heroActions .button--secondary:hover {
+  background: #444444 !important;
 }
 
 .section {

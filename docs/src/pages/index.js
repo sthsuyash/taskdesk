@@ -31,9 +31,6 @@ function Feature({ title, description }) {
 }
 
 function Hero() {
-  const { siteConfig } = useDocusaurusContext();
-  const appUrl = siteConfig.customFields?.appUrl || 'http://localhost:5174';
-  
   return (
     <header className={styles.hero}>
       <div className="container">
@@ -51,9 +48,6 @@ function Hero() {
             <Link className="button button--secondary button--lg" to="/docs/api">
               API Reference
             </Link>
-            <a className="button button--ghost button--lg" href={appUrl}>
-              Open App →
-            </a>
           </div>
         </div>
       </div>

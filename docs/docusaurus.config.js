@@ -2,11 +2,9 @@
 import { themes as prismThemes } from 'prism-react-renderer';
 import dotenv from 'dotenv';
 
-// Load .env file
 dotenv.config({ path: '.env' });
 
 /** @type {import('@docusaurus/types').Config} */
-const appUrl = process.env.VITE_APP_URL || 'http://localhost:5174';
 
 const config = {
   title: 'TaskDesk',
@@ -20,10 +18,6 @@ const config = {
   projectName: 'taskdesk',
 
   onBrokenLinks: 'throw',
-
-  customFields: {
-    appUrl,
-  },
 
   i18n: {
     defaultLocale: 'en',
@@ -91,7 +85,7 @@ const config = {
             label: 'Docs',
           },
           {
-            href: 'https://github.com/sthasuyash/taskdesk',
+            href: 'https://github.com/sthsuyash/taskdesk',
             label: 'GitHub',
             position: 'right',
           },
