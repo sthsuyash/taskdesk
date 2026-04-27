@@ -48,6 +48,9 @@ function Hero() {
             <Link className="button button--secondary button--lg" to="/docs/api">
               API Reference
             </Link>
+            <a className="button button--ghost button--lg" href="http://localhost:5174">
+              Open App →
+            </a>
           </div>
         </div>
       </div>
