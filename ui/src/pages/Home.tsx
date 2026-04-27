@@ -1,9 +1,9 @@
 import { type ChangeEvent, type FormEvent, useEffect, useRef, useState } from 'react';
 import { CheckCircle2, CircleDashed, Radio } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
-import { useTasks } from '../hooks/useTasks';
-import { useSessionRecorder } from '../hooks/useSessionRecorder';
-import type { Task, TaskPayload } from '../types';
+import { useTasks } from '@/hooks/useTasks';
+import { useSessionRecorder } from '@/hooks/useSessionRecorder';
+import type { Task, TaskPayload } from '@/types';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -205,7 +205,7 @@ export default function Home() {
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                         <h2 className="text-2xl font-semibold tracking-tight">Tasks Workspace</h2>
-                        <p className="text-sm text-muted-foreground">Manage tasks while rrweb records your session.</p>
+                        <p className="text-sm text-muted-foreground">Manage tasks while TaskDesk records your session.</p>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
                         <Badge variant={recorderBadgeVariant} className="w-fit">

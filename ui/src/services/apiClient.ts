@@ -1,4 +1,4 @@
-import { env } from '../config/env';
+import { env } from '@/config/env';
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     const url = path.startsWith('http') ? path : `${env.apiUrl}${path}`;
@@ -7,6 +7,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
             'Content-Type': 'application/json',
             ...(options.headers || {}),
         },
+        credentials: 'include',
         ...options,
     });
 

@@ -1,17 +1,17 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import { record } from '@rrweb/record';
-import { createSession, postSessionEvents } from '../services/sessionsApi';
-import type { RecorderState } from '../types';
+import { createSession, postSessionEvents } from '@/services/sessionsApi';
+import type { RecorderState } from '@/types';
 import { env } from '@/config/env';
 
 const FLUSH_INTERVAL_MS = 500;
 const SOCKET_OPEN_TIMEOUT_MS = 5000;
 const RECONNECT_BASE_DELAY_MS = 2000;
 const MAX_RECONNECT_ATTEMPTS = 5;
-const ACTIVE_SESSION_STORAGE_KEY = 'rrweb.activeSessionId';
+const ACTIVE_SESSION_STORAGE_KEY = 'taskdesk.activeSessionId';
 
-type RrwebRecordApi = typeof record & {
+type TaskDeskRecordApi = typeof record & {
     addCustomEvent?: (tag: string, payload: unknown) => void;
 };
 
@@ -28,7 +28,7 @@ export function useSessionRecorder() {
     const reconnectAttemptsRef = useRef(0);
     const isUnmountedRef = useRef(false);
     const isCleanupRef = useRef(false);
-    // Track whether rrweb record() is active before allowing custom events
+    // Track whether TaskDesk record() is active before allowing custom events
     const isRecordingRef = useRef(false);
 
     const emitCustomEvent = useCallback((tag: string, payload: unknown) => {
@@ -300,7 +300,7 @@ export function useSessionRecorder() {
                     });
                     isRecordingRef.current = true;
                 } catch (error) {
-                    console.error('[Recorder] Failed to initialize rrweb record:', error);
+                    console.error('[Recorder] Failed to initialize TaskDesk record:', error);
                     if (stopRecording) {
                         stopRecording();
                     }

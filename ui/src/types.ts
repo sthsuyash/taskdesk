@@ -15,20 +15,6 @@ export interface TaskPayload {
     status: TaskStatus;
 }
 
-export interface SessionSummary {
-    id: string;
-    url: string;
-    userAgent: string;
-    startedAt: number;
-    lastEventAt: number;
-    eventCount: number;
-    durationMs: number;
-}
-
-export interface SessionsResponse {
-    sessions: SessionSummary[];
-}
-
 export interface SessionEventsResponse {
     events: unknown[];
 }
@@ -39,6 +25,31 @@ export interface TasksResponse {
 
 export interface TaskResponse {
     task: Task;
+}
+
+export interface AuthUser {
+    id: string;
+    email: string;
+    role: 'user' | 'support' | 'admin';
+    createdAt: number;
+    updatedAt: number;
+}
+
+export interface AuthResponse {
+    user: AuthUser;
+}
+
+export interface CurrentUserResponse {
+    user: AuthUser;
+}
+
+export interface LoginPayload {
+    email: string;
+    password: string;
+}
+
+export interface RegisterPayload extends LoginPayload {
+    name?: string;
 }
 
 export type RecorderState = 'initializing' | 'recording' | 'error';

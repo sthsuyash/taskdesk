@@ -1,12 +1,15 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import AppShell from '@/components/layout/AppShell';
 import { Toaster } from '@/components/ui/toaster';
-import Home from './pages/Home';
-import Dashboard from './pages/Dashboard';
-import Live from './pages/Live';
-import './index.css';
+import { AuthInit } from '@/auth/AuthInit';
+import RequireAuth from '@/auth/RequireAuth';
+import Home from '@/pages/Home';
+import Login from '@/pages/Login';
+import Register from '@/pages/Register';
+import Profile from '@/pages/Profile';
+import '@/index.css';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -16,14 +19,34 @@ if (!rootElement) {
 ReactDOM.createRoot(rootElement).render(
     <React.StrictMode>
         <BrowserRouter>
-            <AppShell>
+            <AuthInit>
                 <Routes>
-                    <Route path="/" element={<Home />} />
-                    <Route path="/dashboard" element={<Dashboard />} />
-                    <Route path="/live" element={<Live />} />
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/register" element={<Register />} />
+                    <Route
+                        path="/profile"
+                        element={
+                            <RequireAuth>
+                                <AppShell>
+                                    <Profile />
+                                </AppShell>
+                            </RequireAuth>
+                        }
+                    />
+                    <Route
+                        path="/"
+                        element={
+                            <RequireAuth>
+                                <AppShell>
+                                    <Home />
+                                </AppShell>
+                            </RequireAuth>
+                        }
+                    />
+                    <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
-            </AppShell>
-            <Toaster />
+                <Toaster />
+            </AuthInit>
         </BrowserRouter>
     </React.StrictMode>,
 );

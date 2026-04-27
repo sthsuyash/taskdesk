@@ -1,5 +1,5 @@
-import { apiClient } from './apiClient';
-import type { TaskPayload, TaskResponse, TasksResponse } from '../types';
+import { apiClient } from '@/services/apiClient';
+import type { TaskPayload, TaskResponse, TasksResponse } from '@/types';
 
 export function listTasks() {
     return apiClient.get<TasksResponse>('/api/tasks');

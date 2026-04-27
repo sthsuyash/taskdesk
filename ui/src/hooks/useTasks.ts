@@ -4,8 +4,8 @@ import {
     deleteTask,
     listTasks,
     updateTask,
-} from '../services/tasksApi';
-import type { Task, TaskPayload } from '../types';
+} from '@/services/tasksApi';
+import type { Task, TaskPayload } from '@/types';
 
 export function useTasks() {
     const [tasks, setTasks] = useState<Task[]>([]);
