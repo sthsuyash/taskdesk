@@ -6,16 +6,16 @@ import styles from './index.module.css';
 
 const features = [
   {
-    title: 'Record',
-    description: 'Capture DOM events, user interactions, and network activity with pixel-perfect accuracy.',
+    title: 'Simple Tasks',
+    description: 'Create and manage tasks with a clean, focused interface designed for productivity.',
   },
   {
-    title: 'Replay',
-    description: 'Play back recorded sessions with a full-featured player including pause, seek, and speed controls.',
+    title: 'Session Recording',
+    description: 'Automatic session capture using rrweb - every click, scroll, and interaction.',
   },
   {
-    title: 'Live Mode',
-    description: 'Stream sessions in real-time for live co-browsing and instant user support.',
+    title: 'Live Support',
+    description: 'Watch sessions in real-time with WebSocket streaming for instant help.',
   },
 ];
 
@@ -38,7 +38,7 @@ function Hero() {
           <Heading as="h1" className={styles.heroTitle}>TaskDesk</Heading>
           <p className={styles.heroSubtitle}>Task management with session replay</p>
           <p className={styles.heroDescription}>
-            A complete solution for managing tasks while recording user sessions for support and analytics.
+            One focused app, one admin console, unified session events.
             Built on the popular rrweb library.
           </p>
           <div className={styles.heroActions}>
@@ -70,28 +70,6 @@ function Features() {
   );
 }
 
-function CodePreview() {
-  return (
-    <section className={styles.sectionMuted}>
-      <div className="container">
-        <Heading as="h2" className={styles.sectionTitle}>Quick Start</Heading>
-        <div className={styles.codeBlock}>
-          <pre>
-            {`# Install dependencies
-cd ui && pnpm install
-
-# Start development
-pnpm dev
-
-# Open browser
-http://localhost:5173`}
-          </pre>
-        </div>
-      </div>
-    </section>
-  );
-}
-
 export default function Home() {
   const { siteConfig } = useDocusaurusContext();
   return (
@@ -99,7 +77,6 @@ export default function Home() {
       <main className={styles.homeMain}>
         <Hero />
         <Features />
-        <CodePreview />
       </main>
     </Layout>
   );

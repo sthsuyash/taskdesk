@@ -41,9 +41,6 @@ const config = {
       return {
         name: 'disable-incompatible-progress-plugin',
         configureWebpack(webpackConfig) {
-          // Work around webpack 5.106+ schema validation rejecting
-          // webpackbar-style options (name/color/reporters/reporter).
-          // We patch both start and build flows.
           webpackConfig.plugins = (webpackConfig.plugins || []).filter((plugin) => {
             const pluginName = plugin?.constructor?.name;
             const pluginOptions = plugin?.options;
@@ -62,7 +59,6 @@ const config = {
             return true;
           });
 
-          // Mutate in place to avoid altering plugin merge behavior.
           return undefined;
         },
       };
@@ -76,6 +72,7 @@ const config = {
         defaultMode: 'light',
       },
       navbar: {
+        title: 'TaskDesk',
         items: [
           {
             type: 'docSidebar',
