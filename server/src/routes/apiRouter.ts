@@ -15,6 +15,14 @@ interface ApiRouterDependencies {
 export function createApiRouter({ store, broadcastToViewers }: ApiRouterDependencies) {
     const router = Router();
 
+    router.get('/', async (_req: Request, res: Response) => {
+        res.json({
+            message: 'Welcome to Taskdesk API',
+            version: '1.0.0',
+            docs: '/api-docs',
+        });
+    });
+
     router.get('/health', async (_req: Request, res: Response) => {
         res.json({ status: 'ok' });
     });
