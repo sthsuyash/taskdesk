@@ -22,6 +22,7 @@ export interface SessionSummary {
     startedAt: number;
     lastEventAt: number;
     eventCount: number;
+    durationMs: number;
     userId: string;
     ipAddress: string;
 }
@@ -53,7 +54,7 @@ export interface Store {
     getAuthSession(sessionToken: string): Promise<AuthUser | null>;
     deleteAuthSession(sessionToken: string): Promise<void>;
     createSession(
-        meta?: { url?: string; userAgent?: string },
+        meta?: { url?: string; userAgent?: string; ipAddress?: string },
         userId?: string
     ): Promise<{ sessionId: string }>;
     appendEvents(
@@ -84,7 +85,9 @@ export interface Store {
     listUsers(
         page?: number,
         limit?: number,
-        role?: AuthRole
+        role?: AuthRole,
+        sortBy?: string,
+        sortOrder?: string
     ): Promise<{ users: AuthUser[]; total: number }>;
     createUser(
         payload: { email: string; password: string; role: AuthRole },
