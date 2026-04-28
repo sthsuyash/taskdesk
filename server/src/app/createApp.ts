@@ -8,7 +8,7 @@ import express, {
     type Response,
     type Router,
 } from 'express';
-import { swaggerSpec } from '../config/swagger.js';
+import { swaggerSpec } from '@/config/swagger.js';
 
 interface CreateAppOptions {
     apiRouter: Router;
