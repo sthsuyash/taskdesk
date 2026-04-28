@@ -22,8 +22,8 @@ export interface SessionSummary {
     startedAt: number;
     lastEventAt: number;
     eventCount: number;
-    durationMs: number;
     userId: string;
+    ipAddress: string;
 }
 
 export interface AuthUser {
@@ -62,12 +62,12 @@ export interface Store {
         actor?: AuthActor
     ): Promise<SessionRow | null>;
     getSessionEvents(sessionId: string, actor?: AuthActor): Promise<unknown[] | null>;
-    listSessions(actor?: AuthActor): Promise<SessionSummary[]>;
+    listSessions(actor?: AuthActor, page?: number, limit?: number, sortBy?: string, sortOrder?: string): Promise<{ sessions: SessionSummary[]; total: number }>;
     deleteSession(
         sessionId: string,
         actor?: AuthActor
     ): Promise<{ ok: true } | { error: string; statusCode: number }>;
-    listTasks(actor?: AuthActor): Promise<Task[]>;
+    listTasks(actor?: AuthActor, page?: number, limit?: number, status?: TaskStatus): Promise<{ tasks: Task[]; total: number; page: number; limit: number; totalPages: number }>;
     createTask(
         payload: TaskPayload,
         actor?: AuthActor
@@ -138,6 +138,7 @@ interface SessionRow {
     last_event_at: Date;
     event_count: number;
     user_id: string;
+    ip_address: string;
 }
 
 interface AuthUserRow {
@@ -196,6 +197,7 @@ function mapSessionRow(session: SessionRow): SessionSummary {
         eventCount: session.event_count,
         durationMs: lastEventAt - startedAt,
         userId: session.user_id,
+        ipAddress: session.ip_address || '',
     };
 }
 
@@ -256,6 +258,7 @@ export async function createStore({
                 id TEXT PRIMARY KEY,
                 url TEXT DEFAULT 'unknown',
                 user_agent TEXT DEFAULT '',
+                ip_address TEXT DEFAULT '',
                 started_at TIMESTAMP NOT NULL DEFAULT NOW(),
                 last_event_at TIMESTAMP NOT NULL DEFAULT NOW(),
                 event_count INTEGER DEFAULT 0,
@@ -286,6 +289,7 @@ export async function createStore({
         `);
 
         await client.query(`ALTER TABLE sessions ADD COLUMN IF NOT EXISTS user_id TEXT DEFAULT ''`);
+            await client.query(`ALTER TABLE sessions ADD COLUMN IF NOT EXISTS ip_address TEXT DEFAULT ''`);
         await client.query(`ALTER TABLE tasks ADD COLUMN IF NOT EXISTS user_id TEXT DEFAULT ''`);
 
         if (bootstrapAdmin) {
@@ -360,14 +364,14 @@ export async function createStore({
     async function ensureSession(
         client: PoolClient,
         id: string,
-        meta: { url?: string; userAgent?: string } = {},
+        meta: { url?: string; userAgent?: string; ipAddress?: string } = {},
         userId = defaultOwnerUserId
     ) {
         await client.query(
-            `INSERT INTO sessions (id, url, user_agent, started_at, last_event_at, event_count, user_id)
-             VALUES ($1, $2, $3, NOW(), NOW(), 0, $4)
+            `INSERT INTO sessions (id, url, user_agent, ip_address, started_at, last_event_at, event_count, user_id)
+             VALUES ($1, $2, $3, $4, NOW(), NOW(), 0, $5)
              ON CONFLICT (id) DO NOTHING`,
-            [id, meta.url || 'unknown', meta.userAgent || '', userId || defaultOwnerUserId || '']
+            [id, meta.url || 'unknown', meta.userAgent || '', meta.ipAddress || '', userId || defaultOwnerUserId || '']
         );
     }
 
@@ -633,19 +637,18 @@ export async function createStore({
             }
         },
 
-        async listSessions(actor) {
-            const result =
-                actor?.role === 'admin' || actor?.role === 'support'
-                    ? await pool.query<SessionRow>(
-                        `SELECT id, url, user_agent, started_at, last_event_at, event_count, user_id
-                     FROM sessions ORDER BY started_at DESC`
-                    )
-                    : await pool.query<SessionRow>(
-                        `SELECT id, url, user_agent, started_at, last_event_at, event_count, user_id
-                     FROM sessions WHERE user_id = $1 ORDER BY started_at DESC`,
-                        [actor?.id || defaultOwnerUserId || '']
-                    );
-            return result.rows.map(mapSessionRow);
+async listSessions(actor, page = 1, limit = 50) {
+            const offset = (page - 1) * limit;
+            const baseQuery = actor?.role === 'admin' || actor?.role === 'support'
+                ? { text: 'SELECT id, url, user_agent, ip_address, started_at, last_event_at, event_count, user_id FROM sessions', countText: 'SELECT COUNT(*) FROM sessions' }
+                : { text: 'SELECT id, url, user_agent, ip_address, started_at, last_event_at, event_count, user_id FROM sessions WHERE user_id = $1', countText: 'SELECT COUNT(*) FROM sessions WHERE user_id = $1', param: [actor?.id || defaultOwnerUserId || ''] };
+
+            const [countResult, sessionsResult] = await Promise.all([
+                pool.query(baseQuery.countText, baseQuery.param || []),
+                pool.query<SessionRow>(`${baseQuery.text} ORDER BY started_at DESC LIMIT $1 OFFSET $2`, [...(baseQuery.param || []), limit, offset])
+            ]);
+            const total = parseInt(countResult.rows[0]?.count || '0', 10);
+            return { sessions: sessionsResult.rows.map(mapSessionRow), total };
         },
 
         async deleteSession(sessionId, actor) {
@@ -664,19 +667,28 @@ export async function createStore({
             }
         },
 
-        async listTasks(actor) {
-            const result =
-                actor?.role === 'admin' || actor?.role === 'support'
-                    ? await pool.query<TaskRow>(
-                        `SELECT id, title, description, status, created_at, updated_at, user_id
-                     FROM tasks ORDER BY created_at DESC`
-                    )
-                    : await pool.query<TaskRow>(
-                        `SELECT id, title, description, status, created_at, updated_at, user_id
-                     FROM tasks WHERE user_id = $1 ORDER BY created_at DESC`,
-                        [actor?.id || defaultOwnerUserId || '']
-                    );
-            return result.rows.map(mapTaskRow);
+async listTasks(actor, page = 1, limit = 20, status?: TaskStatus) {
+            const offset = (page - 1) * limit;
+            const baseQuery = actor?.role === 'admin' || actor?.role === 'support'
+                ? { text: 'SELECT id, title, description, status, create_at, update_at, user_id FROM tasks', countText: 'SELECT COUNT(*) FROM tasks' }
+                : { text: 'SELECT id, title, description, status, create_at, update_at, user_id FROM tasks WHERE user_id = $1', countText: 'SELECT COUNT(*) FROM tasks WHERE user_id = $1', param: [actor?.id || defaultOwnerUserId || ''] };
+
+            let whereClause = '';
+            let params: unknown[] = [];
+            if (status) {
+                whereClause = baseQuery.param ? ' AND status = $2' : ' WHERE status = $1';
+                params = [...baseQuery.param || [], status];
+            } else if (baseQuery.param) {
+                params = [...baseQuery.param];
+            }
+
+            const [countResult, tasksResult] = await Promise.all([
+                pool.query(`${baseQuery.countText}${whereClause ? ' WHERE' + whereClause.split(' WHERE ')[1] : ''}`, params),
+                pool.query(`${baseQuery.text}${whereClause} ORDER BY create_at DESC LIMIT $1 OFFSET $2`, [limit, offset]),
+            ]);
+
+            const total = parseInt(countResult.rows[0]?.count || '0', 10);
+            return { tasks: tasksResult.rows.map(mapTaskRow), total, page, limit, totalPages: Math.ceil(total / limit) };
         },
 
         async createTask(payload, actor) {
@@ -769,8 +781,12 @@ export async function createStore({
             }
         },
 
-        async listUsers(page = 1, limit = 20, role?: AuthRole) {
+        async listUsers(page = 1, limit = 20, role?: AuthRole, sortBy = 'created_at', sortOrder = 'desc') {
             const offset = (page - 1) * limit;
+            const allowedSort = ['created_at', 'email', 'role'];
+            const col = allowedSort.includes(sortBy) ? sortBy : 'created_at';
+            const order = sortOrder === 'asc' ? 'ASC' : 'DESC';
+            
             const countResult = role
                 ? await pool.query<{ count: string }>(
                     `SELECT COUNT(*) as count FROM users WHERE role = $1`,
@@ -780,11 +796,11 @@ export async function createStore({
             const total = parseInt(countResult.rows[0].count, 10);
             const result = role
                 ? await pool.query<AuthUserRow>(
-                    `SELECT * FROM users WHERE role = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3`,
+                    `SELECT * FROM users WHERE role = $1 ORDER BY ${col} ${order} LIMIT $2 OFFSET $3`,
                     [role, limit, offset]
                 )
                 : await pool.query<AuthUserRow>(
-                    `SELECT * FROM users ORDER BY created_at DESC LIMIT $1 OFFSET $2`,
+                    `SELECT * FROM users ORDER BY ${col} ${order} LIMIT $1 OFFSET $2`,
                     [limit, offset]
                 );
             return {

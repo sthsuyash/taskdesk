@@ -79,6 +79,7 @@ export function createApiRouter({ store, broadcastToViewers }: ApiRouterDependen
                 {
                     url: req.body.url,
                     userAgent: req.body.userAgent,
+                    ipAddress: req.ip || req.socket.remoteAddress || '',
                 },
                 actor.id
             );
@@ -113,8 +114,8 @@ export function createApiRouter({ store, broadcastToViewers }: ApiRouterDependen
         return res.json({ ok: true, received: events.length, total: session.event_count });
     });
 
-    router.get('/sessions', async (_req: Request, res: Response) => {
-        const actor = await getCurrentUserFromRequest(_req, store);
+    router.get('/sessions', async (req: Request, res: Response) => {
+        const actor = await getCurrentUserFromRequest(req, store);
         if (!actor) {
             return res.status(401).json({ error: 'Unauthorized' });
         }
@@ -122,8 +123,10 @@ export function createApiRouter({ store, broadcastToViewers }: ApiRouterDependen
             return res.status(403).json({ error: 'Forbidden' });
         }
 
-        const sessions = await store.listSessions(actor);
-        res.json({ sessions });
+        const page = Math.max(1, parseInt(String(req.query.page), 10) || 1);
+        const limit = Math.min(100, Math.max(1, parseInt(String(req.query.limit), 10) || 50));
+        const result = await store.listSessions(actor, page, limit);
+        res.json(result);
     });
 
     router.get('/sessions/:id/events', async (req: Request, res: Response) => {
@@ -162,14 +165,18 @@ export function createApiRouter({ store, broadcastToViewers }: ApiRouterDependen
         res.json(result);
     });
 
-    router.get('/tasks', async (_req: Request, res: Response) => {
-        const actor = await getCurrentUserFromRequest(_req, store);
+    router.get('/tasks', async (req: Request, res: Response) => {
+        const actor = await getCurrentUserFromRequest(req, store);
         if (!actor) {
             return res.status(401).json({ error: 'Unauthorized' });
         }
 
-        const tasks = await store.listTasks(actor);
-        res.json({ tasks });
+        const page = Math.max(1, parseInt(String(req.query.page), 10) || 1);
+        const limit = Math.min(100, Math.max(1, parseInt(String(req.query.limit), 10) || 20));
+        const status = req.query.status as TaskStatus | undefined;
+
+        const result = await store.listTasks(actor, page, limit, status);
+        res.json(result);
     });
 
     router.post('/tasks', async (req: Request, res: Response) => {
@@ -227,12 +234,19 @@ export function createApiRouter({ store, broadcastToViewers }: ApiRouterDependen
 
         const page = Math.max(1, parseInt(String(req.query.page), 10) || 1);
         const limit = Math.min(100, Math.max(1, parseInt(String(req.query.limit), 10) || 20));
-        const role = (
-            ['user', 'admin', 'support'].includes(req.query.role as string)
-                ? req.query.role
-                : undefined
-        ) as AuthRole | undefined;
-        const result = await store.listUsers(page, limit, role);
+        const sortBy = String(req.query.sortBy || 'created_at');
+        const sortOrder = String(req.query.sortOrder || 'desc');
+
+        let role: AuthRole | undefined;
+        if (req.query.role && ['user', 'admin', 'support'].includes(req.query.role as string)) {
+            role = req.query.role as AuthRole;
+        }
+
+        if (actor.role === 'support') {
+            role = 'user';
+        }
+
+        const result = await store.listUsers(page, limit, role, sortBy, sortOrder);
         res.json({
             users: result.users,
             total: result.total,

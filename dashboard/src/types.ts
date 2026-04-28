@@ -25,10 +25,12 @@ export interface SessionSummary {
     eventCount: number;
     durationMs: number;
     userId: string;
+    ipAddress: string;
 }
 
 export interface SessionsResponse {
     sessions: SessionSummary[];
+    total: number;
 }
 
 export interface SessionEventsResponse {
@@ -37,6 +39,10 @@ export interface SessionEventsResponse {
 
 export interface TasksResponse {
     tasks: Task[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
 }
 
 export interface TaskResponse {

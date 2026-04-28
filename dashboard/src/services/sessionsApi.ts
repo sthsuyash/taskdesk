@@ -15,8 +15,8 @@ export function postSessionEvents(sessionId: string, events: unknown[]) {
     );
 }
 
-export function listSessions() {
-    return apiClient.get<SessionsResponse>('/api/sessions');
+export function listSessions(page = 1, limit = 50) {
+    return apiClient.get<SessionsResponse>(`/api/sessions?page=${page}&limit=${limit}`);
 }
 
 export function getSessionEvents(sessionId: string) {
