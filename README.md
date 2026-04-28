@@ -21,11 +21,14 @@ cd dashboard && pnpm install && cd ..
 cd server && pnpm install && cd ..
 
 # Run
-cd server && pnpm dev       # localhost:8000
-cd ui && pnpm dev          # localhost:5173
-cd dashboard && pnpm dev    # localhost:5174
-cd landing && pnpm dev      # localhost:5175
+cd server && pnpm dev
+cd ui && pnpm dev
+cd dashboard && pnpm dev
+cd landing && pnpm dev
 ```
+
+Each app reads its runtime URLs from its own `.env` file. Update the matching
+`.env` before running in a different environment.
 
 ## Tech Stack
 
@@ -41,4 +44,4 @@ cd landing && pnpm dev      # localhost:5175
 
 ## License
 
-MIT
+[MIT](./LICENSE)

@@ -1,6 +1,6 @@
 # API Reference
 
-Base URL: `http://localhost:8000`
+Base URL: configured via `VITE_API_URL`
 
 ## Authentication
 
@@ -125,6 +125,8 @@ Delete session. Requires admin.
 ### GET /api/tasks
 
 List tasks for authenticated user.
+
+Each authenticated user only sees their own tasks.
 
 ### POST /api/tasks
 
