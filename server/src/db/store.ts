@@ -268,6 +268,8 @@ export async function createStore({
                 user_id TEXT DEFAULT ''
             );
 
+            ALTER TABLE sessions ADD CONSTRAINT fk_sessions_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
+
             CREATE TABLE IF NOT EXISTS session_events (
                 id SERIAL PRIMARY KEY,
                 session_id TEXT NOT NULL,
@@ -289,6 +291,8 @@ export async function createStore({
             );
 
             CREATE INDEX IF NOT EXISTS idx_tasks_created_at ON tasks(created_at DESC);
+
+            ALTER TABLE tasks ADD CONSTRAINT fk_tasks_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
         `);
 
         await client.query(`ALTER TABLE sessions ADD COLUMN IF NOT EXISTS user_id TEXT DEFAULT ''`);
@@ -924,7 +928,30 @@ async listTasks(actor, page = 1, limit = 20, status?: TaskStatus) {
                 return { error: 'Cannot delete this user', statusCode: 403 };
             }
 
-            await pool.query(`DELETE FROM users WHERE id = $1`, [id]);
+            const client = await pool.connect();
+            try {
+                await client.query('BEGIN');
+
+                await client.query(`DELETE FROM tasks WHERE user_id = $1`, [id]);
+
+                await client.query(
+                    `DELETE FROM session_events WHERE session_id IN (SELECT id FROM sessions WHERE user_id = $1)`,
+                    [id]
+                );
+                await client.query(`DELETE FROM sessions WHERE user_id = $1`, [id]);
+
+                await client.query(`DELETE FROM auth_sessions WHERE user_id = $1`, [id]);
+
+                await client.query(`DELETE FROM users WHERE id = $1`, [id]);
+
+                await client.query('COMMIT');
+            } catch (error) {
+                await client.query('ROLLBACK');
+                throw error;
+            } finally {
+                client.release();
+            }
+
             return { ok: true };
         },
 
