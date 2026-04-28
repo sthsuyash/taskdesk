@@ -9,9 +9,9 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import { formatDate } from '@/lib/utils';
 import { getSessionEvents, listSessions } from '@/services/sessionsApi';
 import { listUsers } from '@/services/usersApi';
-import { formatDate } from '@/lib/utils';
 import type { AuthUser, SessionSummary } from '@/types';
 import {
     Clock3,
@@ -61,10 +61,10 @@ const INSPECTOR_TABS: Array<{
     label: string;
     icon: typeof List;
 }> = [
-        { key: 'events', label: 'Events', icon: List },
-        { key: 'pages', label: 'Pages', icon: LayoutPanelTop },
-        { key: 'details', label: 'Details', icon: Info },
-    ];
+    { key: 'events', label: 'Events', icon: List },
+    { key: 'pages', label: 'Pages', icon: LayoutPanelTop },
+    { key: 'details', label: 'Details', icon: Info },
+];
 
 function formatDuration(durationMs: number) {
     const totalSeconds = Math.max(0, Math.round(durationMs / 1000));
@@ -148,12 +148,12 @@ function describeEvent(event: EventWithTime): EventDescriptor {
     if (event.type === 3) {
         const incremental = event.data as
             | {
-                source?: number;
-                x?: number;
-                y?: number;
-                type?: number;
-                text?: string;
-            }
+                  source?: number;
+                  x?: number;
+                  y?: number;
+                  type?: number;
+                  text?: string;
+              }
             | undefined;
 
         switch (incremental?.source) {
