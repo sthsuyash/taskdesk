@@ -1,8 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { CheckCircle2, CircleDashed, ListTodo, Pencil, Trash2, User, Search } from 'lucide-react';
-import { listTasks, createTask, updateTask, deleteTask } from '@/services/tasksApi';
-import { listUsers } from '@/services/usersApi';
-import type { AuthUser, Task, TaskPayload } from '@/types';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
     Dialog,
     DialogContent,
@@ -13,11 +11,6 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { useToast } from '@/hooks/use-toast';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
     Select,
     SelectContent,
@@ -25,6 +18,13 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
+import { createTask, deleteTask, listTasks, updateTask } from '@/services/tasksApi';
+import { listUsers } from '@/services/usersApi';
+import type { AuthUser, Task, TaskPayload } from '@/types';
+import { CheckCircle2, CircleDashed, ListTodo, Pencil, Search, Trash2, User } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 const initialForm: TaskPayload = {
     title: '',
@@ -74,14 +74,23 @@ export default function Tasks() {
         return tasks.filter((t) => {
             if (filterUser !== 'all' && t.userId !== filterUser) return false;
             if (filterStatus !== 'all' && t.status !== filterStatus) return false;
-            if (search && !t.title.toLowerCase().includes(search.toLowerCase()) && !t.description.toLowerCase().includes(search.toLowerCase())) return false;
+            if (
+                search &&
+                !t.title.toLowerCase().includes(search.toLowerCase()) &&
+                !t.description.toLowerCase().includes(search.toLowerCase())
+            )
+                return false;
             return true;
         });
     }, [tasks, filterUser, filterStatus, search]);
 
     useEffect(() => {
         if (selectedTask) {
-            setForm({ title: selectedTask.title, description: selectedTask.description, status: selectedTask.status });
+            setForm({
+                title: selectedTask.title,
+                description: selectedTask.description,
+                status: selectedTask.status,
+            });
         }
     }, [selectedTask]);
 
@@ -166,7 +175,9 @@ export default function Tasks() {
                 <div className="flex flex-wrap items-center justify-between gap-4">
                     <div>
                         <h2 className="text-2xl font-semibold tracking-tight">Tasks</h2>
-                        <p className="text-sm text-muted-foreground">Manage all tasks across users</p>
+                        <p className="text-sm text-muted-foreground">
+                            Manage all tasks across users
+                        </p>
                     </div>
                 </div>
             </section>
@@ -246,7 +257,9 @@ export default function Tasks() {
                         <ListTodo className="h-5 w-5 text-primary" />
                         All Tasks
                     </CardTitle>
-                    <CardDescription>Showing {filteredTasks.length} of {tasks.length} tasks</CardDescription>
+                    <CardDescription>
+                        Showing {filteredTasks.length} of {tasks.length} tasks
+                    </CardDescription>
                 </CardHeader>
                 <CardContent>
                     {loading ? (
@@ -274,11 +287,15 @@ export default function Tasks() {
                                                         className="text-left"
                                                         onClick={() => void toggleStatus(task)}
                                                     >
-                                                        <p className={`font-medium ${task.status === 'done' ? 'text-muted-foreground line-through' : ''}`}>
+                                                        <p
+                                                            className={`font-medium ${task.status === 'done' ? 'text-muted-foreground line-through' : ''}`}
+                                                        >
                                                             {task.title}
                                                         </p>
                                                         {task.description && (
-                                                            <p className="mt-0.5 text-xs text-muted-foreground">{task.description}</p>
+                                                            <p className="mt-0.5 text-xs text-muted-foreground">
+                                                                {task.description}
+                                                            </p>
                                                         )}
                                                     </button>
                                                 </td>
@@ -286,17 +303,33 @@ export default function Tasks() {
                                                     <div className="flex items-center gap-1.5">
                                                         <User className="h-3 w-3 text-muted-foreground" />
                                                         <span className="text-xs text-muted-foreground">
-                                                            {owner?.email ?? task.userId.slice(0, 8)}
+                                                            {owner?.email ??
+                                                                task.userId.slice(0, 8)}
                                                         </span>
                                                         {owner && (
-                                                            <Badge variant={owner.role === 'user' ? 'secondary' : owner.role === 'admin' ? 'destructive' : 'default'} className="text-[10px]">
+                                                            <Badge
+                                                                variant={
+                                                                    owner.role === 'user'
+                                                                        ? 'secondary'
+                                                                        : owner.role === 'admin'
+                                                                          ? 'destructive'
+                                                                          : 'default'
+                                                                }
+                                                                className="text-[10px]"
+                                                            >
                                                                 {owner.role}
                                                             </Badge>
                                                         )}
                                                     </div>
                                                 </td>
                                                 <td className="py-3 pr-4">
-                                                    <Badge variant={task.status === 'done' ? 'secondary' : 'outline'}>
+                                                    <Badge
+                                                        variant={
+                                                            task.status === 'done'
+                                                                ? 'secondary'
+                                                                : 'outline'
+                                                        }
+                                                    >
                                                         {task.status}
                                                     </Badge>
                                                 </td>
@@ -325,7 +358,12 @@ export default function Tasks() {
                                     })}
                                     {filteredTasks.length === 0 && (
                                         <tr>
-                                            <td colSpan={4} className="py-6 text-center text-muted-foreground">No tasks found</td>
+                                            <td
+                                                colSpan={4}
+                                                className="py-6 text-center text-muted-foreground"
+                                            >
+                                                No tasks found
+                                            </td>
                                         </tr>
                                     )}
                                 </tbody>
@@ -356,13 +394,20 @@ export default function Tasks() {
                             <Label>Description</Label>
                             <Textarea
                                 value={form.description}
-                                onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+                                onChange={(e) =>
+                                    setForm((f) => ({ ...f, description: e.target.value }))
+                                }
                                 placeholder="Description (optional)"
                             />
                         </div>
                         <div className="space-y-2">
                             <Label>Status</Label>
-                            <Select value={form.status} onValueChange={(v) => setForm((f) => ({ ...f, status: v as TaskPayload['status'] }))}>
+                            <Select
+                                value={form.status}
+                                onValueChange={(v) =>
+                                    setForm((f) => ({ ...f, status: v as TaskPayload['status'] }))
+                                }
+                            >
                                 <SelectTrigger>
                                     <SelectValue />
                                 </SelectTrigger>
@@ -374,7 +419,9 @@ export default function Tasks() {
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setEditOpen(false)}>Cancel</Button>
+                        <Button variant="outline" onClick={() => setEditOpen(false)}>
+                            Cancel
+                        </Button>
                         <Button onClick={handleSave} disabled={submitting || !form.title.trim()}>
                             {submitting ? 'Saving...' : selectedTask ? 'Update' : 'Create'}
                         </Button>
@@ -387,11 +434,14 @@ export default function Tasks() {
                     <DialogHeader>
                         <DialogTitle>Delete Task</DialogTitle>
                         <DialogDescription>
-                            Are you sure you want to delete <strong>{selectedTask?.title}</strong>? This action cannot be undone.
+                            Are you sure you want to delete <strong>{selectedTask?.title}</strong>?
+                            This action cannot be undone.
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setDeleteOpen(false)}>Cancel</Button>
+                        <Button variant="outline" onClick={() => setDeleteOpen(false)}>
+                            Cancel
+                        </Button>
                         <Button variant="destructive" onClick={handleDelete} disabled={submitting}>
                             {submitting ? 'Deleting...' : 'Delete'}
                         </Button>

@@ -1,5 +1,5 @@
-import { Navigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
+import { Navigate, useLocation } from 'react-router-dom';
 
 export default function RequireAuth({ children }: { children: React.ReactNode }) {
     const user = useAuthStore((s) => s.user);

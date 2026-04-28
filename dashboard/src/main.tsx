@@ -1,6 +1,3 @@
-import React, { lazy, Suspense } from 'react';
-import ReactDOM from 'react-dom/client';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthInit } from '@/auth/AuthInit';
 import RequireAdmin from '@/auth/RequireAdmin';
 import RequireAuth from '@/auth/RequireAuth';
@@ -8,6 +5,9 @@ import AppShell from '@/components/layout/AppShell';
 import { Toaster } from '@/components/ui/toaster';
 import Login from '@/pages/Login';
 import '@/styles.css';
+import React, { Suspense, lazy } from 'react';
+import ReactDOM from 'react-dom/client';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 
 const Dashboard = lazy(() => import('@/pages/Dashboard'));
 const Live = lazy(() => import('@/pages/Live'));
@@ -99,5 +99,5 @@ ReactDOM.createRoot(rootElement).render(
                 <Toaster />
             </AuthInit>
         </BrowserRouter>
-    </React.StrictMode>,
+    </React.StrictMode>
 );

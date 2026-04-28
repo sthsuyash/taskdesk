@@ -1,11 +1,25 @@
-import { type PropsWithChildren, useState, useRef, useEffect } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, RadioTower, Users, ListTodo, LogOut, ChevronDown, User } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/store/authStore';
-import { Button } from '@/components/ui/button';
+import {
+    ChevronDown,
+    LayoutDashboard,
+    ListTodo,
+    LogOut,
+    RadioTower,
+    User,
+    Users,
+} from 'lucide-react';
+import { type PropsWithChildren, useEffect, useRef, useState } from 'react';
+import { NavLink, useNavigate } from 'react-router-dom';
 
-function UserMenu({ user, onLogout }: { user: { email: string; role: string; id: string }; onLogout: () => void }) {
+function UserMenu({
+    user,
+    onLogout,
+}: {
+    user: { email: string; role: string; id: string };
+    onLogout: () => void;
+}) {
     const [open, setOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
     const navigate = useNavigate();
@@ -42,7 +56,10 @@ function UserMenu({ user, onLogout }: { user: { email: string; role: string; id:
                     </div>
                     <button
                         type="button"
-                        onClick={() => { setOpen(false); navigate('/profile'); }}
+                        onClick={() => {
+                            setOpen(false);
+                            navigate('/profile');
+                        }}
                         className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                     >
                         <User className="h-4 w-4" />
@@ -50,7 +67,10 @@ function UserMenu({ user, onLogout }: { user: { email: string; role: string; id:
                     </button>
                     <button
                         type="button"
-                        onClick={() => { setOpen(false); onLogout(); }}
+                        onClick={() => {
+                            setOpen(false);
+                            onLogout();
+                        }}
                         className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                     >
                         <LogOut className="h-4 w-4" />
@@ -77,7 +97,9 @@ export default function AppShell({ children }: PropsWithChildren) {
             <header className="sticky top-0 z-20 border-b bg-card/80 backdrop-blur supports-[backdrop-filter]:bg-card/70">
                 <div className="container flex h-16 items-center justify-between gap-4">
                     <div>
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">TaskDesk support ops</p>
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                            TaskDesk support ops
+                        </p>
                         <h1 className="text-base font-semibold tracking-tight">Admin Dashboard</h1>
                     </div>
                     <div className="flex items-center gap-3">
@@ -87,7 +109,8 @@ export default function AppShell({ children }: PropsWithChildren) {
                                 className={({ isActive }) =>
                                     cn(
                                         'inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground',
-                                        isActive && 'bg-primary text-primary-foreground hover:text-primary-foreground',
+                                        isActive &&
+                                            'bg-primary text-primary-foreground hover:text-primary-foreground'
                                     )
                                 }
                             >
@@ -99,7 +122,8 @@ export default function AppShell({ children }: PropsWithChildren) {
                                 className={({ isActive }) =>
                                     cn(
                                         'inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground',
-                                        isActive && 'bg-primary text-primary-foreground hover:text-primary-foreground',
+                                        isActive &&
+                                            'bg-primary text-primary-foreground hover:text-primary-foreground'
                                     )
                                 }
                             >
@@ -111,7 +135,8 @@ export default function AppShell({ children }: PropsWithChildren) {
                                 className={({ isActive }) =>
                                     cn(
                                         'inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground',
-                                        isActive && 'bg-primary text-primary-foreground hover:text-primary-foreground',
+                                        isActive &&
+                                            'bg-primary text-primary-foreground hover:text-primary-foreground'
                                     )
                                 }
                             >
@@ -124,7 +149,8 @@ export default function AppShell({ children }: PropsWithChildren) {
                                     className={({ isActive }) =>
                                         cn(
                                             'inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground',
-                                            isActive && 'bg-primary text-primary-foreground hover:text-primary-foreground',
+                                            isActive &&
+                                                'bg-primary text-primary-foreground hover:text-primary-foreground'
                                         )
                                     }
                                 >
@@ -133,9 +159,7 @@ export default function AppShell({ children }: PropsWithChildren) {
                                 </NavLink>
                             )}
                         </nav>
-                        {user && (
-                            <UserMenu user={user} onLogout={handleLogout} />
-                        )}
+                        {user && <UserMenu user={user} onLogout={handleLogout} />}
                     </div>
                 </div>
             </header>

@@ -1,6 +1,11 @@
-import { createContext, useContext, useEffect, useState } from 'react';
-import { getCurrentUser, login as loginRequest, logout as logoutRequest, register as registerRequest } from '@/services/authApi';
+import {
+    getCurrentUser,
+    login as loginRequest,
+    logout as logoutRequest,
+    register as registerRequest,
+} from '@/services/authApi';
 import type { AuthUser, LoginPayload, RegisterPayload } from '@/types';
+import { createContext, useContext, useEffect, useState } from 'react';
 
 interface AuthContextValue {
     user: AuthUser | null;

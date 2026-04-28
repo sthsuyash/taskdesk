@@ -1,5 +1,5 @@
-import { Navigate } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
+import { Navigate } from 'react-router-dom';
 
 export default function RequireAdmin({ children }: { children: React.ReactNode }) {
     const user = useAuthStore((s) => s.user);

@@ -1,11 +1,11 @@
-import { type FormEvent, type ChangeEvent, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuthStore } from '@/store/authStore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
+import { useAuthStore } from '@/store/authStore';
+import { type ChangeEvent, type FormEvent, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export default function Login() {
     const navigate = useNavigate();
@@ -35,7 +35,9 @@ export default function Login() {
             <Card className="w-full max-w-sm">
                 <CardHeader>
                     <CardTitle>Support Dashboard</CardTitle>
-                    <CardDescription>Sign in to access session replay and live co-browsing</CardDescription>
+                    <CardDescription>
+                        Sign in to access session replay and live co-browsing
+                    </CardDescription>
                 </CardHeader>
                 <CardContent>
                     <form onSubmit={handleSubmit} className="space-y-4">
@@ -46,7 +48,9 @@ export default function Login() {
                                 type="email"
                                 placeholder="support@example.com"
                                 value={email}
-                                onChange={(e: ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
+                                onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                                    setEmail(e.target.value)
+                                }
                                 required
                             />
                         </div>
@@ -56,7 +60,9 @@ export default function Login() {
                                 id="password"
                                 type="password"
                                 value={password}
-                                onChange={(e: ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
+                                onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                                    setPassword(e.target.value)
+                                }
                                 required
                             />
                         </div>
