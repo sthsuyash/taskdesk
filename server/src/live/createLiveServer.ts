@@ -1,7 +1,7 @@
-import { WebSocketServer, type RawData, type WebSocket } from 'ws';
 import type { Server } from 'http';
-import type { Store } from '../db/store.js';
+import { type RawData, type WebSocket, WebSocketServer } from 'ws';
 import { getCurrentUserFromCookieHeader } from '../auth.js';
+import type { Store } from '../db/store.js';
 
 interface LiveServerDependencies {
     server: Server;
@@ -10,7 +10,10 @@ interface LiveServerDependencies {
 
 export function createLiveServer({ server, store }: LiveServerDependencies) {
     const rooms = new Map<string, Set<WebSocket>>();
-    const viewerBootstrapState = new Map<WebSocket, { ready: boolean; bufferedEvents: unknown[] }>();
+    const viewerBootstrapState = new Map<
+        WebSocket,
+        { ready: boolean; bufferedEvents: unknown[] }
+    >();
 
     function broadcastToViewers(sessionId: string, events: unknown[]) {
         const viewers = rooms.get(sessionId);
@@ -116,7 +119,10 @@ export function createLiveServer({ server, store }: LiveServerDependencies) {
                         await store.appendEvents(sessionId, events, actor);
                         broadcastToViewers(sessionId, events);
                     } catch (error) {
-                        const message = error instanceof Error ? error.message : 'Unknown websocket parse error';
+                        const message =
+                            error instanceof Error
+                                ? error.message
+                                : 'Unknown websocket parse error';
                         console.error('WS parse error:', message);
                     }
                 });

@@ -1,21 +1,23 @@
 import type { Request, Response } from 'express';
-import type { Store } from './db/store.js';
 import { env } from './config/env.js';
+import type { Store } from './db/store.js';
 
 export function parseCookies(rawCookieHeader?: string) {
-    return (rawCookieHeader || '').split(';').reduce<Record<string, string>>((accumulator, chunk) => {
-        const separatorIndex = chunk.indexOf('=');
-        if (separatorIndex === -1) {
-            return accumulator;
-        }
+    return (rawCookieHeader || '')
+        .split(';')
+        .reduce<Record<string, string>>((accumulator, chunk) => {
+            const separatorIndex = chunk.indexOf('=');
+            if (separatorIndex === -1) {
+                return accumulator;
+            }
 
-        const key = chunk.slice(0, separatorIndex).trim();
-        const value = chunk.slice(separatorIndex + 1).trim();
-        if (key) {
-            accumulator[key] = decodeURIComponent(value);
-        }
-        return accumulator;
-    }, {});
+            const key = chunk.slice(0, separatorIndex).trim();
+            const value = chunk.slice(separatorIndex + 1).trim();
+            if (key) {
+                accumulator[key] = decodeURIComponent(value);
+            }
+            return accumulator;
+        }, {});
 }
 
 export function getAuthTokenFromRequest(req: Request) {
@@ -31,7 +33,10 @@ export async function getCurrentUserFromRequest(req: Request, store: Store) {
     return store.getAuthSession(token);
 }
 
-export async function getCurrentUserFromCookieHeader(cookieHeader: string | undefined, store: Store) {
+export async function getCurrentUserFromCookieHeader(
+    cookieHeader: string | undefined,
+    store: Store
+) {
     const token = parseCookies(cookieHeader)[env.authCookieName] || null;
     if (!token) {
         return null;
@@ -57,13 +62,7 @@ export function setAuthCookie(res: Response, token: string) {
 }
 
 export function clearAuthCookie(res: Response) {
-    const parts = [
-        `${env.authCookieName}=`,
-        'Path=/',
-        'HttpOnly',
-        'SameSite=Lax',
-        'Max-Age=0',
-    ];
+    const parts = [`${env.authCookieName}=`, 'Path=/', 'HttpOnly', 'SameSite=Lax', 'Max-Age=0'];
 
     if (env.authCookieSecure) {
         parts.push('Secure');

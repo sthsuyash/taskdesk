@@ -1,4 +1,4 @@
-import { randomBytes, pbkdf2Sync, timingSafeEqual } from 'node:crypto';
+import { pbkdf2Sync, randomBytes, timingSafeEqual } from 'node:crypto';
 import { Pool, type PoolClient } from 'pg';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -40,27 +40,65 @@ export interface AuthActor {
 }
 
 export interface Store {
-    registerUser(payload: { email: string; password: string; role?: AuthRole }): Promise<{ user: AuthUser } | { error: string; statusCode: number }>;
-    authenticateUser(payload: { email: string; password: string }): Promise<{ user: AuthUser } | { error: string; statusCode: number }>;
+    registerUser(payload: {
+        email: string;
+        password: string;
+        role?: AuthRole;
+    }): Promise<{ user: AuthUser } | { error: string; statusCode: number }>;
+    authenticateUser(payload: {
+        email: string;
+        password: string;
+    }): Promise<{ user: AuthUser } | { error: string; statusCode: number }>;
     createAuthSession(userId: string): Promise<{ sessionToken: string }>;
     getAuthSession(sessionToken: string): Promise<AuthUser | null>;
     deleteAuthSession(sessionToken: string): Promise<void>;
-    createSession(meta?: { url?: string; userAgent?: string }, userId?: string): Promise<{ sessionId: string }>;
-    appendEvents(sessionId: string, events: unknown[], actor?: AuthActor): Promise<SessionRow | null>;
+    createSession(
+        meta?: { url?: string; userAgent?: string },
+        userId?: string
+    ): Promise<{ sessionId: string }>;
+    appendEvents(
+        sessionId: string,
+        events: unknown[],
+        actor?: AuthActor
+    ): Promise<SessionRow | null>;
     getSessionEvents(sessionId: string, actor?: AuthActor): Promise<unknown[] | null>;
     listSessions(actor?: AuthActor): Promise<SessionSummary[]>;
-    deleteSession(sessionId: string, actor?: AuthActor): Promise<{ ok: true } | { error: string; statusCode: number }>;
+    deleteSession(
+        sessionId: string,
+        actor?: AuthActor
+    ): Promise<{ ok: true } | { error: string; statusCode: number }>;
     listTasks(actor?: AuthActor): Promise<Task[]>;
-    createTask(payload: TaskPayload, actor?: AuthActor): Promise<
-        { task: Task; statusCode: 201 }
-        | { error: string; statusCode: number }
-    >;
-    updateTask(id: string, payload: TaskPayload, actor?: AuthActor): Promise<{ task: Task } | { error: string; statusCode: number }>;
-    deleteTask(id: string, actor?: AuthActor): Promise<{ ok: true } | { error: string; statusCode: number }>;
-    listUsers(page?: number, limit?: number, role?: AuthRole): Promise<{ users: AuthUser[]; total: number }>;
-    createUser(payload: { email: string; password: string; role: AuthRole }, actor?: AuthActor): Promise<{ user: AuthUser } | { error: string; statusCode: number }>;
-    updateUser(id: string, payload: { email?: string; role?: AuthRole; password?: string }, actor?: AuthActor): Promise<{ user: AuthUser } | { error: string; statusCode: number }>;
-    deleteUser(id: string, actor?: AuthActor): Promise<{ ok: true } | { error: string; statusCode: number }>;
+    createTask(
+        payload: TaskPayload,
+        actor?: AuthActor
+    ): Promise<{ task: Task; statusCode: 201 } | { error: string; statusCode: number }>;
+    updateTask(
+        id: string,
+        payload: TaskPayload,
+        actor?: AuthActor
+    ): Promise<{ task: Task } | { error: string; statusCode: number }>;
+    deleteTask(
+        id: string,
+        actor?: AuthActor
+    ): Promise<{ ok: true } | { error: string; statusCode: number }>;
+    listUsers(
+        page?: number,
+        limit?: number,
+        role?: AuthRole
+    ): Promise<{ users: AuthUser[]; total: number }>;
+    createUser(
+        payload: { email: string; password: string; role: AuthRole },
+        actor?: AuthActor
+    ): Promise<{ user: AuthUser } | { error: string; statusCode: number }>;
+    updateUser(
+        id: string,
+        payload: { email?: string; role?: AuthRole; password?: string },
+        actor?: AuthActor
+    ): Promise<{ user: AuthUser } | { error: string; statusCode: number }>;
+    deleteUser(
+        id: string,
+        actor?: AuthActor
+    ): Promise<{ ok: true } | { error: string; statusCode: number }>;
     close(): Promise<void>;
 }
 
@@ -185,7 +223,11 @@ function verifyPassword(password: string, salt: string, expectedHash: string) {
     return timingSafeEqual(Buffer.from(hash, 'hex'), Buffer.from(expectedHash, 'hex'));
 }
 
-export async function createStore({ connectionString, bootstrapAdmin, bootstrapSupport }: StoreConfig): Promise<Store> {
+export async function createStore({
+    connectionString,
+    bootstrapAdmin,
+    bootstrapSupport,
+}: StoreConfig): Promise<Store> {
     const pool = new Pool({ connectionString });
     let defaultOwnerUserId = '';
 
@@ -266,11 +308,20 @@ export async function createStore({ connectionString, bootstrapAdmin, bootstrapS
                         [adminId, adminEmail, salt, hash]
                     );
                 } else if (existingAdmin.rows[0]?.role !== 'admin') {
-                    await client.query(`UPDATE users SET role = 'admin', updated_at = NOW() WHERE id = $1`, [adminId]);
+                    await client.query(
+                        `UPDATE users SET role = 'admin', updated_at = NOW() WHERE id = $1`,
+                        [adminId]
+                    );
                 }
 
-                await client.query(`UPDATE sessions SET user_id = $1 WHERE user_id IS NULL OR user_id = ''`, [adminId]);
-                await client.query(`UPDATE tasks SET user_id = $1 WHERE user_id IS NULL OR user_id = ''`, [adminId]);
+                await client.query(
+                    `UPDATE sessions SET user_id = $1 WHERE user_id IS NULL OR user_id = ''`,
+                    [adminId]
+                );
+                await client.query(
+                    `UPDATE tasks SET user_id = $1 WHERE user_id IS NULL OR user_id = ''`,
+                    [adminId]
+                );
                 defaultOwnerUserId = adminId;
             }
         }
@@ -295,7 +346,10 @@ export async function createStore({ connectionString, bootstrapAdmin, bootstrapS
                         [supportId, supportEmail, salt, hash]
                     );
                 } else if (existingSupport.rows[0]?.role !== 'support') {
-                    await client.query(`UPDATE users SET role = 'support', updated_at = NOW() WHERE id = $1`, [supportId]);
+                    await client.query(
+                        `UPDATE users SET role = 'support', updated_at = NOW() WHERE id = $1`,
+                        [supportId]
+                    );
                 }
             }
         }
@@ -303,7 +357,12 @@ export async function createStore({ connectionString, bootstrapAdmin, bootstrapS
         client.release();
     }
 
-    async function ensureSession(client: PoolClient, id: string, meta: { url?: string; userAgent?: string } = {}, userId = defaultOwnerUserId) {
+    async function ensureSession(
+        client: PoolClient,
+        id: string,
+        meta: { url?: string; userAgent?: string } = {},
+        userId = defaultOwnerUserId
+    ) {
         await client.query(
             `INSERT INTO sessions (id, url, user_agent, started_at, last_event_at, event_count, user_id)
              VALUES ($1, $2, $3, NOW(), NOW(), 0, $4)
@@ -353,14 +412,25 @@ export async function createStore({ connectionString, bootstrapAdmin, bootstrapS
         return false;
     }
 
-    async function ensureSessionOwnership(client: PoolClient, sessionId: string, actor?: AuthActor) {
-        const result = await client.query<SessionRow>(`SELECT * FROM sessions WHERE id = $1`, [sessionId]);
+    async function ensureSessionOwnership(
+        client: PoolClient,
+        sessionId: string,
+        actor?: AuthActor
+    ) {
+        const result = await client.query<SessionRow>(`SELECT * FROM sessions WHERE id = $1`, [
+            sessionId,
+        ]);
         const session = result.rows[0];
         if (!session) {
             return null;
         }
 
-        if (actor?.role !== 'admin' && actor?.id !== session.user_id) {
+        // Allow admins and support users to access sessions, or the session owner.
+        if (
+            actor?.role !== 'admin' &&
+            actor?.role !== 'support' &&
+            actor?.id !== session.user_id
+        ) {
             return null;
         }
 
@@ -383,7 +453,10 @@ export async function createStore({ connectionString, bootstrapAdmin, bootstrapS
 
             const client = await pool.connect();
             try {
-                const existing = await client.query<AuthUserRow>(`SELECT * FROM users WHERE email = $1 LIMIT 1`, [email]);
+                const existing = await client.query<AuthUserRow>(
+                    `SELECT * FROM users WHERE email = $1 LIMIT 1`,
+                    [email]
+                );
                 if (existing.rows.length > 0) {
                     return { error: 'Email already registered', statusCode: 409 };
                 }
@@ -420,7 +493,10 @@ export async function createStore({ connectionString, bootstrapAdmin, bootstrapS
 
             const client = await pool.connect();
             try {
-                const result = await client.query<AuthUserRow>(`SELECT * FROM users WHERE email = $1 LIMIT 1`, [email]);
+                const result = await client.query<AuthUserRow>(
+                    `SELECT * FROM users WHERE email = $1 LIMIT 1`,
+                    [email]
+                );
                 const user = result.rows[0];
                 if (!user || !verifyPassword(password, user.password_salt, user.password_hash)) {
                     return { error: 'Invalid email or password', statusCode: 401 };
@@ -476,7 +552,9 @@ export async function createStore({ connectionString, bootstrapAdmin, bootstrapS
                     return null;
                 }
 
-                await client.query(`UPDATE auth_sessions SET last_seen_at = NOW() WHERE id = $1`, [sessionToken]);
+                await client.query(`UPDATE auth_sessions SET last_seen_at = NOW() WHERE id = $1`, [
+                    sessionToken,
+                ]);
 
                 return {
                     id: row.user_id,
@@ -556,16 +634,17 @@ export async function createStore({ connectionString, bootstrapAdmin, bootstrapS
         },
 
         async listSessions(actor) {
-            const result = actor?.role === 'admin' || actor?.role === 'support'
-                ? await pool.query<SessionRow>(
-                    `SELECT id, url, user_agent, started_at, last_event_at, event_count, user_id
+            const result =
+                actor?.role === 'admin' || actor?.role === 'support'
+                    ? await pool.query<SessionRow>(
+                        `SELECT id, url, user_agent, started_at, last_event_at, event_count, user_id
                      FROM sessions ORDER BY started_at DESC`
-                )
-                : await pool.query<SessionRow>(
-                    `SELECT id, url, user_agent, started_at, last_event_at, event_count, user_id
+                    )
+                    : await pool.query<SessionRow>(
+                        `SELECT id, url, user_agent, started_at, last_event_at, event_count, user_id
                      FROM sessions WHERE user_id = $1 ORDER BY started_at DESC`,
-                    [actor?.id || defaultOwnerUserId || '']
-                );
+                        [actor?.id || defaultOwnerUserId || '']
+                    );
             return result.rows.map(mapSessionRow);
         },
 
@@ -586,22 +665,24 @@ export async function createStore({ connectionString, bootstrapAdmin, bootstrapS
         },
 
         async listTasks(actor) {
-            const result = actor?.role === 'admin' || actor?.role === 'support'
-                ? await pool.query<TaskRow>(
-                    `SELECT id, title, description, status, created_at, updated_at, user_id
+            const result =
+                actor?.role === 'admin' || actor?.role === 'support'
+                    ? await pool.query<TaskRow>(
+                        `SELECT id, title, description, status, created_at, updated_at, user_id
                      FROM tasks ORDER BY created_at DESC`
-                )
-                : await pool.query<TaskRow>(
-                    `SELECT id, title, description, status, created_at, updated_at, user_id
+                    )
+                    : await pool.query<TaskRow>(
+                        `SELECT id, title, description, status, created_at, updated_at, user_id
                      FROM tasks WHERE user_id = $1 ORDER BY created_at DESC`,
-                    [actor?.id || defaultOwnerUserId || '']
-                );
+                        [actor?.id || defaultOwnerUserId || '']
+                    );
             return result.rows.map(mapTaskRow);
         },
 
         async createTask(payload, actor) {
             const title = typeof payload.title === 'string' ? payload.title.trim() : '';
-            const description = typeof payload.description === 'string' ? payload.description.trim() : '';
+            const description =
+                typeof payload.description === 'string' ? payload.description.trim() : '';
             const status: TaskStatus = payload.status === 'done' ? 'done' : 'todo';
             const ownerUserId = actor?.id || defaultOwnerUserId || '';
 
@@ -619,8 +700,16 @@ export async function createStore({ connectionString, bootstrapAdmin, bootstrapS
             );
 
             return {
-                task: { id, title, description, status, createdAt: now.getTime(), updatedAt: now.getTime(), userId: ownerUserId },
-                statusCode: 201 as const
+                task: {
+                    id,
+                    title,
+                    description,
+                    status,
+                    createdAt: now.getTime(),
+                    updatedAt: now.getTime(),
+                    userId: ownerUserId,
+                },
+                statusCode: 201 as const,
             };
         },
 
@@ -633,9 +722,10 @@ export async function createStore({ connectionString, bootstrapAdmin, bootstrapS
                 }
 
                 const title = typeof payload.title === 'string' ? payload.title.trim() : task.title;
-                const description = typeof payload.description === 'string'
-                    ? payload.description.trim()
-                    : task.description;
+                const description =
+                    typeof payload.description === 'string'
+                        ? payload.description.trim()
+                        : task.description;
                 const status: TaskStatus = payload.status === 'done' ? 'done' : 'todo';
 
                 if (!title) {
@@ -657,7 +747,7 @@ export async function createStore({ connectionString, bootstrapAdmin, bootstrapS
                         createdAt: task.created_at.getTime(),
                         updatedAt: now.getTime(),
                         userId: task.user_id,
-                    }
+                    },
                 };
             } finally {
                 client.release();
@@ -682,7 +772,10 @@ export async function createStore({ connectionString, bootstrapAdmin, bootstrapS
         async listUsers(page = 1, limit = 20, role?: AuthRole) {
             const offset = (page - 1) * limit;
             const countResult = role
-                ? await pool.query<{ count: string }>(`SELECT COUNT(*) as count FROM users WHERE role = $1`, [role])
+                ? await pool.query<{ count: string }>(
+                    `SELECT COUNT(*) as count FROM users WHERE role = $1`,
+                    [role]
+                )
                 : await pool.query<{ count: string }>(`SELECT COUNT(*) as count FROM users`);
             const total = parseInt(countResult.rows[0].count, 10);
             const result = role
@@ -708,7 +801,9 @@ export async function createStore({ connectionString, bootstrapAdmin, bootstrapS
             const { email, password, role } = payload;
             const normalizedEmail = normalizeEmail(email);
 
-            const existingEmail = await pool.query(`SELECT id FROM users WHERE email = $1`, [normalizedEmail]);
+            const existingEmail = await pool.query(`SELECT id FROM users WHERE email = $1`, [
+                normalizedEmail,
+            ]);
             if (existingEmail.rows.length > 0) {
                 return { error: 'Email already in use', statusCode: 409 };
             }
@@ -747,13 +842,18 @@ export async function createStore({ connectionString, bootstrapAdmin, bootstrapS
                 return { error: 'Cannot modify this user role', statusCode: 403 };
             }
 
-            const email = typeof payload.email === 'string' ? normalizeEmail(payload.email) : existing.email;
-            const role: AuthRole = payload.role === 'admin' || payload.role === 'support' || payload.role === 'user'
-                ? payload.role
-                : existing.role;
+            const email =
+                typeof payload.email === 'string' ? normalizeEmail(payload.email) : existing.email;
+            const role: AuthRole =
+                payload.role === 'admin' || payload.role === 'support' || payload.role === 'user'
+                    ? payload.role
+                    : existing.role;
 
             if (payload.email && email !== existing.email) {
-                const emailCheck = await pool.query(`SELECT id FROM users WHERE email = $1 AND id != $2`, [email, id]);
+                const emailCheck = await pool.query(
+                    `SELECT id FROM users WHERE email = $1 AND id != $2`,
+                    [email, id]
+                );
                 if (emailCheck.rows.length > 0) {
                     return { error: 'Email already in use', statusCode: 409 };
                 }

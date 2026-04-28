@@ -1,6 +1,11 @@
-import { Router, type Request, type Response } from 'express';
-import type { Store, AuthRole } from '../db/store.js';
-import { clearAuthCookie, getAuthTokenFromRequest, getCurrentUserFromRequest, setAuthCookie } from '../auth.js';
+import { type Request, type Response, Router } from 'express';
+import {
+    clearAuthCookie,
+    getAuthTokenFromRequest,
+    getCurrentUserFromRequest,
+    setAuthCookie,
+} from '../auth.js';
+import type { AuthRole, Store } from '../db/store.js';
 
 interface ApiRouterDependencies {
     store: Store;
@@ -70,10 +75,13 @@ export function createApiRouter({ store, broadcastToViewers }: ApiRouterDependen
         }
 
         try {
-            const result = await store.createSession({
-                url: req.body.url,
-                userAgent: req.body.userAgent,
-            }, actor.id);
+            const result = await store.createSession(
+                {
+                    url: req.body.url,
+                    userAgent: req.body.userAgent,
+                },
+                actor.id
+            );
 
             res.json(result);
         } catch (error) {
@@ -219,7 +227,11 @@ export function createApiRouter({ store, broadcastToViewers }: ApiRouterDependen
 
         const page = Math.max(1, parseInt(String(req.query.page), 10) || 1);
         const limit = Math.min(100, Math.max(1, parseInt(String(req.query.limit), 10) || 20));
-        const role = (['user', 'admin', 'support'].includes(req.query.role as string) ? req.query.role : undefined) as AuthRole | undefined;
+        const role = (
+            ['user', 'admin', 'support'].includes(req.query.role as string)
+                ? req.query.role
+                : undefined
+        ) as AuthRole | undefined;
         const result = await store.listUsers(page, limit, role);
         res.json({
             users: result.users,
@@ -239,7 +251,11 @@ export function createApiRouter({ store, broadcastToViewers }: ApiRouterDependen
             return res.status(403).json({ error: 'Forbidden' });
         }
 
-        const { email, password, role } = req.body as { email?: string; password?: string; role?: string };
+        const { email, password, role } = req.body as {
+            email?: string;
+            password?: string;
+            role?: string;
+        };
         if (!email || !password || !role) {
             return res.status(400).json({ error: 'email, password, role required' });
         }
@@ -272,7 +288,7 @@ export function createApiRouter({ store, broadcastToViewers }: ApiRouterDependen
         res.json({ user: result.user });
     });
 
-router.delete('/users/:id', async (req: Request, res: Response) => {
+    router.delete('/users/:id', async (req: Request, res: Response) => {
         const id = String(req.params.id);
         const actor = await getCurrentUserFromRequest(req, store);
         if (!actor) {
