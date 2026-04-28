@@ -143,7 +143,7 @@ export default function AppShell({ children }: PropsWithChildren) {
                                 <ListTodo className="h-4 w-4" />
                                 Tasks
                             </NavLink>
-                            {user?.role === 'admin' && (
+                            {(user?.role === 'admin' || user?.role === 'support') && (
                                 <NavLink
                                     to="/users"
                                     className={({ isActive }) =>

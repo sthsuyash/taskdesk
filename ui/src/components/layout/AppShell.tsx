@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/store/authStore';
 import { ChevronDown, Film, LayoutDashboard, ListTodo, LogOut, Radio, User } from 'lucide-react';
 import { type PropsWithChildren, useEffect, useRef, useState } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 
 function UserMenu({
     user,
@@ -77,10 +77,12 @@ function UserMenu({
 
 export default function AppShell({ children }: PropsWithChildren) {
     const navigate = useNavigate();
+    const location = useLocation();
     const user = useAuthStore((s) => s.user);
     const logout = useAuthStore((s) => s.logout);
     const recorder = useSessionRecorder();
-    const { sessionId, recordingState } = recorder;
+    const { sessionId, recordingState, emitCustomEvent } = recorder;
+    const previousPathRef = useRef<string>('');
 
     useEffect(() => {
         const onKeyDown = (event: KeyboardEvent) => {
@@ -93,6 +95,24 @@ export default function AppShell({ children }: PropsWithChildren) {
         window.addEventListener('keydown', onKeyDown);
         return () => window.removeEventListener('keydown', onKeyDown);
     }, [navigate]);
+
+    useEffect(() => {
+        const currentPath = `${location.pathname}${location.search}${location.hash}`;
+
+        if (previousPathRef.current === currentPath) {
+            return;
+        }
+
+        emitCustomEvent('route-change', {
+            from: previousPathRef.current || null,
+            to: currentPath,
+            href: window.location.href,
+            title: document.title,
+            ts: Date.now(),
+        });
+
+        previousPathRef.current = currentPath;
+    }, [emitCustomEvent, location.hash, location.pathname, location.search]);
 
     const handleLogout = async () => {
         await logout();
@@ -126,7 +146,7 @@ export default function AppShell({ children }: PropsWithChildren) {
                                         cn(
                                             'inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground',
                                             isActive &&
-                                                'bg-primary text-primary-foreground hover:text-primary-foreground'
+                                            'bg-primary text-primary-foreground hover:text-primary-foreground'
                                         )
                                     }
                                 >
@@ -139,7 +159,7 @@ export default function AppShell({ children }: PropsWithChildren) {
                                         cn(
                                             'inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground',
                                             isActive &&
-                                                'bg-primary text-primary-foreground hover:text-primary-foreground'
+                                            'bg-primary text-primary-foreground hover:text-primary-foreground'
                                         )
                                     }
                                 >
@@ -152,7 +172,7 @@ export default function AppShell({ children }: PropsWithChildren) {
                                         cn(
                                             'inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground',
                                             isActive &&
-                                                'bg-primary text-primary-foreground hover:text-primary-foreground'
+                                            'bg-primary text-primary-foreground hover:text-primary-foreground'
                                         )
                                     }
                                 >
@@ -165,7 +185,7 @@ export default function AppShell({ children }: PropsWithChildren) {
                                         cn(
                                             'inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground',
                                             isActive &&
-                                                'bg-primary text-primary-foreground hover:text-primary-foreground'
+                                            'bg-primary text-primary-foreground hover:text-primary-foreground'
                                         )
                                     }
                                 >
@@ -183,14 +203,14 @@ export default function AppShell({ children }: PropsWithChildren) {
                                 {recordingState === 'error'
                                     ? 'Recorder issue'
                                     : sessionId
-                                      ? `Session ${sessionId.slice(0, 8)}`
-                                      : 'Recorder starting'}
+                                        ? `Session ${sessionId.slice(0, 8)}`
+                                        : 'Recorder starting'}
                             </div>
                             {user && <UserMenu user={user} onLogout={handleLogout} />}
                         </div>
                     </div>
                 </header>
-                <main className="container py-6">{children}</main>
+                <main className="container py-6">{children ?? <Outlet />}</main>
             </div>
         </RecorderProvider>
     );

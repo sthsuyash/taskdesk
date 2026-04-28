@@ -1,10 +1,17 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { getSessionEvents, listSessions } from '@/services/sessionsApi';
 import { listUsers } from '@/services/usersApi';
+import { formatDate } from '@/lib/utils';
 import type { AuthUser, SessionSummary } from '@/types';
 import {
     Clock3,
@@ -12,8 +19,8 @@ import {
     Info,
     LayoutPanelTop,
     List,
-    MousePointerClick,
     PlayCircle,
+    Radio,
     Search,
     User,
 } from 'lucide-react';
@@ -24,6 +31,8 @@ import 'rrweb-player/dist/style.css';
 
 interface RrwebPlayerInstance {
     $destroy?: () => void;
+    goto?: (timeOffset: number, play?: boolean) => void;
+    addEventListener?: (event: string, handler: (params: unknown) => unknown) => void;
 }
 
 interface EventWithTime {
@@ -43,7 +52,6 @@ interface PageEntry {
     url: string;
     label: string;
     firstSeenAt: number;
-    eventIndex: number;
 }
 
 type InspectorTab = 'events' | 'pages' | 'details';
@@ -53,14 +61,10 @@ const INSPECTOR_TABS: Array<{
     label: string;
     icon: typeof List;
 }> = [
-    { key: 'events', label: 'Events', icon: List },
-    { key: 'pages', label: 'Pages', icon: LayoutPanelTop },
-    { key: 'details', label: 'Details', icon: Info },
-];
-
-function formatDate(timestamp: number) {
-    return new Date(timestamp).toLocaleString();
-}
+        { key: 'events', label: 'Events', icon: List },
+        { key: 'pages', label: 'Pages', icon: LayoutPanelTop },
+        { key: 'details', label: 'Details', icon: Info },
+    ];
 
 function formatDuration(durationMs: number) {
     const totalSeconds = Math.max(0, Math.round(durationMs / 1000));
@@ -72,6 +76,13 @@ function formatDuration(durationMs: number) {
     }
 
     return `${minutes}m ${String(seconds).padStart(2, '0')}s`;
+}
+
+function formatChapterTime(offsetMs: number) {
+    const totalSeconds = Math.max(0, Math.floor(offsetMs / 1000));
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes}:${String(seconds).padStart(2, '0')}`;
 }
 
 function formatUrlDisplay(url: string) {
@@ -121,18 +132,28 @@ function extractEventUrl(event: EventWithTime) {
     return extractStringUrl(event.data);
 }
 
+function extractCustomTag(event: EventWithTime): string | undefined {
+    if (event.type !== 5 || !event.data || typeof event.data !== 'object') {
+        return undefined;
+    }
+
+    const record = event.data as Record<string, unknown>;
+    const tag = record.tag;
+    return typeof tag === 'string' ? tag : undefined;
+}
+
 function describeEvent(event: EventWithTime): EventDescriptor {
     const eventUrl = extractEventUrl(event);
 
     if (event.type === 3) {
         const incremental = event.data as
             | {
-                  source?: number;
-                  x?: number;
-                  y?: number;
-                  type?: number;
-                  text?: string;
-              }
+                source?: number;
+                x?: number;
+                y?: number;
+                type?: number;
+                text?: string;
+            }
             | undefined;
 
         switch (incremental?.source) {
@@ -193,8 +214,8 @@ function describeEvent(event: EventWithTime): EventDescriptor {
                 return { label: 'Custom Element' };
             default:
                 return eventUrl
-                    ? { label: 'Navigation', detail: formatUrlDisplay(eventUrl) }:
-                    { label: 'Incremental' };
+                    ? { label: 'Navigation', detail: formatUrlDisplay(eventUrl) }
+                    : { label: 'Incremental' };
         }
     }
 
@@ -233,38 +254,88 @@ function describeEvent(event: EventWithTime): EventDescriptor {
 }
 
 function derivePages(events: EventWithTime[], fallbackUrl: string) {
-    const pages: PageEntry[] = [];
-    const seen = new Set<string>();
-
-    const pushPage = (url: string, eventIndex: number, timestamp: number, label: string) => {
+    const rawPages: PageEntry[] = [];
+    const pushRawPage = (url: string, idHint: string, timestamp: number, label: string) => {
         const normalized = url.trim();
-        if (!normalized || seen.has(normalized)) {
+        if (!normalized) {
             return;
         }
 
-        seen.add(normalized);
-        pages.push({
-            id: `${eventIndex}-${normalized}`,
+        rawPages.push({
+            id: `${idHint}-${timestamp}`,
             url: normalized,
             label,
             firstSeenAt: timestamp,
-            eventIndex,
         });
     };
 
-    pushPage(fallbackUrl, 0, events[0]?.timestamp ?? Date.now(), 'Entry point');
+    if (fallbackUrl) {
+        pushRawPage(fallbackUrl, 'entry', events[0]?.timestamp ?? Date.now(), 'Started here');
+    }
 
     events.forEach((event, index) => {
         const url = extractEventUrl(event);
+        const tag = extractCustomTag(event);
+
+        // rrweb meta events usually carry href for full page loads.
+        if (event.type === 4 && url) {
+            pushRawPage(url, `meta-${index}`, event.timestamp, 'Visited page');
+            return;
+        }
+
+        // Explicit app route changes from the UI shell.
+        if (event.type === 5 && tag === 'route-change' && url) {
+            pushRawPage(url, `route-${index}`, event.timestamp, 'Visited page');
+            return;
+        }
+
         if (!url) {
             return;
         }
 
-        const label = index === 0 ? 'Page Load' : 'Navigation';
-        pushPage(url, index, event.timestamp, label);
+        // Fallback: keep navigation-like URL transitions we can infer from the event payload.
+        const descriptor = describeEvent(event);
+        if (descriptor.label === 'Navigation' || descriptor.label === 'Page Load') {
+            pushRawPage(url, `fallback-${index}`, event.timestamp, 'Visited page');
+        }
     });
 
+    // Keep a timeline-style list: only remove consecutive duplicates of the same page.
+    const pages: PageEntry[] = [];
+    let previousPageKey = '';
+
+    for (const page of rawPages) {
+        const currentPageKey = formatUrlDisplay(page.url).toLowerCase();
+        if (currentPageKey === previousPageKey) {
+            continue;
+        }
+
+        pages.push(page);
+        previousPageKey = currentPageKey;
+    }
+
     return pages;
+}
+
+function getSeekOffset(startTime: number, targetTime: number) {
+    return Math.max(0, targetTime - startTime);
+}
+
+function findActivePageIndex(pages: PageEntry[], absoluteTimestamp: number) {
+    if (!pages.length) {
+        return null;
+    }
+
+    let activeIndex = 0;
+    for (let index = 0; index < pages.length; index += 1) {
+        if (pages[index].firstSeenAt <= absoluteTimestamp) {
+            activeIndex = index;
+        } else {
+            break;
+        }
+    }
+
+    return activeIndex;
 }
 
 export default function Dashboard() {
@@ -284,41 +355,28 @@ export default function Dashboard() {
     const [sessionEvents, setSessionEvents] = useState<EventWithTime[]>([]);
     const [filterUser, setFilterUser] = useState<string>('all');
     const [search, setSearch] = useState('');
+    const [page, setPage] = useState(1);
+    const [limit] = useState(50);
+    const [total, setTotal] = useState(0);
 
     const userMap = useMemo(() => new Map(users.map((user) => [user.id, user])), [users]);
 
     const load = useCallback(async () => {
         try {
-            const [sessionsData, usersData] = await Promise.all([listSessions(), listUsers(1, 100)]);
+            const [sessionsData, usersData] = await Promise.all([
+                listSessions(page, limit),
+                listUsers(1, 100),
+            ]);
             setSessions(sessionsData.sessions || []);
+            setTotal(sessionsData.total || 0);
             setUsers(usersData.users);
         } catch (err) {
             console.error('Failed to load data:', err);
         }
-    }, []);
+    }, [page, limit]);
 
-    const filteredSessions = useMemo(() => {
-        return sessions.filter((session) => {
-            if (filterUser !== 'all' && session.userId !== filterUser) {
-                return false;
-            }
-
-            if (search) {
-                const owner = userMap.get(session.userId);
-                const searchLower = search.toLowerCase();
-
-                if (
-                    !owner?.email.toLowerCase().includes(searchLower) &&
-                    !session.id.toLowerCase().includes(searchLower) &&
-                    !session.url.toLowerCase().includes(searchLower)
-                ) {
-                    return false;
-                }
-            }
-
-            return true;
-        });
-    }, [filterUser, search, sessions, userMap]);
+    const filteredSessions = sessions;
+    const totalPages = Math.ceil(total / limit);
 
     const selectedSession = useMemo(
         () => sessions.find((session) => session.id === selectedSessionId) || null,
@@ -351,8 +409,21 @@ export default function Dashboard() {
 
     const selectedEvent =
         selectedEventIndex !== null ? eventRows[selectedEventIndex] || null : null;
-    const selectedPage =
-        selectedPageIndex !== null ? pageEntries[selectedPageIndex] || null : null;
+    const selectedPage = selectedPageIndex !== null ? pageEntries[selectedPageIndex] || null : null;
+
+    const seekToTimestamp = useCallback(
+        (targetTimestamp: number) => {
+            const player = playerRef.current;
+            const startTime = sessionEvents[0]?.timestamp;
+
+            if (!player?.goto || !startTime) {
+                return;
+            }
+
+            player.goto(getSeekOffset(startTime, targetTimestamp), false);
+        },
+        [sessionEvents]
+    );
 
     const isLiveSession = (session: SessionSummary) => {
         const liveWindowMs = 15000;
@@ -363,17 +434,7 @@ export default function Dashboard() {
         void load();
         const intervalId = window.setInterval(() => void load(), 5000);
         return () => window.clearInterval(intervalId);
-    }, [load]);
-
-    useEffect(() => {
-        if (!filteredSessions.length) {
-            return;
-        }
-
-        if (!selectedSessionId || !filteredSessions.some((session) => session.id === selectedSessionId)) {
-            setSelectedSessionId(filteredSessions[0].id);
-        }
-    }, [filteredSessions, selectedSessionId]);
+    }, [load, page, limit]);
 
     useEffect(() => {
         const render = async () => {
@@ -406,14 +467,44 @@ export default function Dashboard() {
                 containerRef.current.innerHTML = '';
 
                 const typedEvents = events as EventWithTime[];
+                const pagesForSession = derivePages(typedEvents, selectedSession?.url || '');
                 setSessionEvents(typedEvents);
                 setSelectedEventIndex(0);
-                setSelectedPageIndex(0);
+                setSelectedPageIndex(pagesForSession.length ? 0 : null);
 
-                playerRef.current = new rrwebPlayer({
+                const player = new rrwebPlayer({
                     target: containerRef.current,
                     props: { events: typedEvents },
                 }) as RrwebPlayerInstance;
+
+                playerRef.current = player;
+
+                player.addEventListener?.('ui-update-current-time', (detail) => {
+                    const payload =
+                        detail && typeof detail === 'object' && 'payload' in detail
+                            ? (detail as { payload?: unknown }).payload
+                            : detail;
+
+                    if (typeof payload !== 'number') {
+                        return;
+                    }
+
+                    const startTime = typedEvents[0]?.timestamp;
+                    if (!startTime) {
+                        return;
+                    }
+
+                    const absoluteTimestamp = startTime + payload;
+                    const nextIndex = findActivePageIndex(pagesForSession, absoluteTimestamp);
+
+                    if (nextIndex === null) {
+                        return;
+                    }
+
+                    setSelectedPageIndex((current) =>
+                        current === nextIndex ? current : nextIndex
+                    );
+                });
             } catch (err) {
                 setError('Failed to load replay');
                 setSessionEvents([]);
@@ -441,7 +532,7 @@ export default function Dashboard() {
                 containerRef.current.innerHTML = '';
             }
         };
-    }, [selectedSessionId, toast]);
+    }, [selectedSession?.url, selectedSessionId, toast]);
 
     return (
         <div className="space-y-6">
@@ -467,7 +558,10 @@ export default function Dashboard() {
                             Refresh
                         </Button>
                         {selectedSessionId && (
-                            <Button variant="outline" onClick={() => navigate(`/live?session=${selectedSessionId}`)}>
+                            <Button
+                                variant="outline"
+                                onClick={() => navigate(`/live?session=${selectedSessionId}`)}
+                            >
                                 Watch live
                             </Button>
                         )}
@@ -475,12 +569,12 @@ export default function Dashboard() {
                 </div>
             </section>
 
-            <div className="flex flex-wrap items-center gap-3">
-                <div className="relative flex-1 max-w-[320px]">
+            <div className="flex flex-wrap items-center gap-4">
+                <div className="relative flex-1 min-w-[280px]">
                     <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <input
                         type="text"
-                        placeholder="Search by session ID, URL, or user email..."
+                        placeholder="Search sessions..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         className="h-10 w-full rounded-md border border-input bg-background pl-10 pr-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
@@ -488,13 +582,15 @@ export default function Dashboard() {
                 </div>
 
                 <Select value={filterUser} onValueChange={setFilterUser}>
-                    <SelectTrigger className="w-[230px]">
-                        <SelectValue />
+                    <SelectTrigger className="w-[200px]">
+                        <SelectValue placeholder="Filter by user" />
                     </SelectTrigger>
                     <SelectContent>
                         <SelectItem value="all">All users ({sessions.length})</SelectItem>
                         {users.map((user) => {
-                            const count = sessions.filter((session) => session.userId === user.id).length;
+                            const count = sessions.filter(
+                                (session) => session.userId === user.id
+                            ).length;
                             return (
                                 <SelectItem key={user.id} value={user.id}>
                                     {user.email} ({count})
@@ -505,11 +601,112 @@ export default function Dashboard() {
                 </Select>
 
                 <span className="text-sm text-muted-foreground">
-                    Showing {filteredSessions.length} of {sessions.length} sessions
+                    {filteredSessions.length} session{filteredSessions.length !== 1 ? 's' : ''}
                 </span>
             </div>
 
-            <section className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
+            <Card className="overflow-hidden">
+                <CardContent className="p-0">
+                    {sessions.length === 0 ? (
+                        <div className="py-12 text-center">
+                            <p className="text-sm text-muted-foreground">
+                                Recording will appear here once users start sessions
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="divide-y">
+                            {sessions.map((session) => {
+                                const sessionOwner = userMap.get(session.userId);
+                                const active = selectedSessionId === session.id;
+                                const live = isLiveSession(session);
+
+                                return (
+                                    <div
+                                        key={session.id}
+                                        className={`flex items-center gap-4 p-4 transition-colors ${active ? 'bg-primary/5' : 'hover:bg-accent/20'}`}
+                                    >
+                                        <div className="min-w-0 flex-1 min-w-0">
+                                            <div className="flex items-center gap-2">
+                                                {live && (
+                                                    <span className="h-2 w-2 animate-pulse rounded-full bg-green-500" />
+                                                )}
+                                                <span className="font-mono text-sm font-medium">
+                                                    {session.id.slice(0, 8)}
+                                                </span>
+                                                <Badge
+                                                    variant={live ? 'secondary' : 'outline'}
+                                                    className="text-[10px]"
+                                                >
+                                                    {live ? 'Live' : `${session.eventCount} events`}
+                                                </Badge>
+                                            </div>
+                                            <p className="mt-1 text-xs text-muted-foreground truncate">
+                                                {sessionOwner?.email || 'Unknown user'} ·{' '}
+                                                {formatDate(session.startedAt)}
+                                            </p>
+                                        </div>
+
+                                        <div className="flex items-center gap-2">
+                                            {live ? (
+                                                <Button
+                                                    size="sm"
+                                                    variant="secondary"
+                                                    onClick={() =>
+                                                        navigate(`/live?session=${session.id}`)
+                                                    }
+                                                >
+                                                    <Radio className="mr-1 h-3 w-3" />
+                                                    Watch Live
+                                                </Button>
+                                            ) : (
+                                                <Button
+                                                    size="sm"
+                                                    variant={active ? 'default' : 'outline'}
+                                                    onClick={() => {
+                                                        setSelectedSessionId(session.id);
+                                                        setSelectedTab('events');
+                                                    }}
+                                                >
+                                                    <PlayCircle className="mr-1 h-3 w-3" />
+                                                    {active ? 'Playing' : 'Play'}
+                                                </Button>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                    <div className="flex items-center justify-between border-t px-3 py-2">
+                        <span className="text-xs text-muted-foreground">
+                            Showing {sessions.length} of {total} sessions
+                        </span>
+                        <div className="flex items-center gap-1">
+                            <button
+                                type="button"
+                                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                                disabled={page <= 1}
+                                className="rounded px-2 py-1 text-xs hover:bg-accent disabled:opacity-50"
+                            >
+                                Prev
+                            </button>
+                            <span className="px-2 text-xs">
+                                Page {page} of {totalPages || 1}
+                            </span>
+                            <button
+                                type="button"
+                                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                                disabled={page >= totalPages}
+                                className="rounded px-2 py-1 text-xs hover:bg-accent disabled:opacity-50"
+                            >
+                                Next
+                            </button>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+
+            <section className="grid grid-cols-1 gap-4 2xl:grid-cols-[1fr_325px] xl:grid-cols-[1fr]">
                 <Card className="overflow-hidden">
                     <CardHeader className="space-y-3 border-b bg-muted/30">
                         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -525,33 +722,41 @@ export default function Dashboard() {
                                 </CardDescription>
                             </div>
 
-                            <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                            <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
                                 {owner && (
-                                    <Badge variant="outline" className="gap-1 text-[10px]">
-                                        <User className="h-3 w-3" />
-                                        {owner.email}
-                                    </Badge>
+                                    <div className="flex items-center gap-2">
+                                        <User className="h-4 w-4 text-primary" />
+                                        <span className="text-foreground font-medium">
+                                            {owner.email}
+                                        </span>
+                                    </div>
                                 )}
                                 {selectedSession && (
-                                    <Badge variant="outline" className="gap-1 text-[10px]">
-                                        <Clock3 className="h-3 w-3" />
-                                        {formatDate(selectedSession.startedAt)}
-                                    </Badge>
+                                    <div className="flex items-center gap-2">
+                                        <Clock3 className="h-4 w-4 text-primary" />
+                                        <span className="text-foreground font-medium">
+                                            {formatDate(selectedSession.startedAt, { time: true })}
+                                        </span>
+                                    </div>
                                 )}
                             </div>
                         </div>
                     </CardHeader>
                     <CardContent className="space-y-3 p-4">
-                        {loading && <p className="text-sm text-muted-foreground">Loading replay...</p>}
+                        {loading && (
+                            <p className="text-sm text-muted-foreground">Loading replay...</p>
+                        )}
                         {error && <p className="text-sm text-destructive">{error}</p>}
                         {!selectedSessionId && (
-                            <p className="text-sm text-muted-foreground">Select a session to replay.</p>
+                            <p className="text-sm text-muted-foreground">
+                                Select a session to replay.
+                            </p>
                         )}
 
                         <div className="rounded-xl border bg-background p-2 shadow-sm">
                             <div
                                 ref={containerRef}
-                                className="min-h-[680px] overflow-auto rounded-lg bg-background"
+                                className="min-h-[650px] overflow-auto rounded-lg bg-background"
                             />
                         </div>
                     </CardContent>
@@ -592,7 +797,7 @@ export default function Dashboard() {
                                         No events loaded yet.
                                     </p>
                                 ) : (
-                                    <div className="max-h-[640px] space-y-2 overflow-auto pr-1">
+                                    <div className="max-h-[640px] overflow-auto pr-1 space-y-2">
                                         {visibleEventRows.map((row) => {
                                             const isSelected = selectedEventIndex === row.index;
 
@@ -609,7 +814,10 @@ export default function Dashboard() {
                                                     <div className="flex items-start justify-between gap-3">
                                                         <div className="min-w-0 space-y-1">
                                                             <div className="flex items-center gap-2">
-                                                                <Badge variant="outline" className="text-[10px]">
+                                                                <Badge
+                                                                    variant="outline"
+                                                                    className="text-[10px]"
+                                                                >
                                                                     {row.label}
                                                                 </Badge>
                                                                 <span className="font-mono text-[10px] text-muted-foreground">
@@ -644,17 +852,20 @@ export default function Dashboard() {
                             <div className="space-y-3">
                                 <div className="flex items-center justify-between text-sm text-muted-foreground">
                                     <span>Pages</span>
-                                    <span>{pageEntries.length} discovered</span>
+                                    <span>{pageEntries.length} steps</span>
                                 </div>
 
                                 {pageEntries.length === 0 ? (
                                     <p className="text-sm text-muted-foreground">
-                                        No page data found for this session.
+                                        No page journey found for this session.
                                     </p>
                                 ) : (
-                                    <div className="space-y-2">
+                                    <div className="max-h-[640px] overflow-auto pr-1 space-y-2">
                                         {pageEntries.map((page, index) => {
                                             const isSelected = selectedPageIndex === index;
+                                            const startTime =
+                                                pageEntries[0]?.firstSeenAt ?? page.firstSeenAt;
+                                            const chapterOffset = page.firstSeenAt - startTime;
 
                                             return (
                                                 <button
@@ -662,22 +873,20 @@ export default function Dashboard() {
                                                     type="button"
                                                     onClick={() => {
                                                         setSelectedPageIndex(index);
-                                                        setSelectedTab('details');
+                                                        seekToTimestamp(page.firstSeenAt);
                                                     }}
                                                     className={`w-full rounded-xl border p-3 text-left transition-colors ${isSelected ? 'border-primary bg-primary/5' : 'bg-background hover:bg-accent/40'}`}
                                                 >
                                                     <div className="flex items-start justify-between gap-3">
                                                         <div className="min-w-0 space-y-1">
-                                                            <div className="flex items-center gap-2">
-                                                                <Badge variant="secondary" className="text-[10px]">
-                                                                    {page.label}
-                                                                </Badge>
-                                                                <span className="font-mono text-[10px] text-muted-foreground">
-                                                                    #{page.eventIndex + 1}
-                                                                </span>
-                                                            </div>
+                                                            <p className="font-mono text-xs font-semibold text-primary">
+                                                                {formatChapterTime(chapterOffset)}
+                                                            </p>
                                                             <p className="truncate text-sm font-medium text-foreground">
                                                                 {formatUrlDisplay(page.url)}
+                                                            </p>
+                                                            <p className="text-xs text-muted-foreground">
+                                                                {page.label}
                                                             </p>
                                                         </div>
                                                         <div className="text-right text-[10px] text-muted-foreground">
@@ -693,187 +902,103 @@ export default function Dashboard() {
                         )}
 
                         {selectedTab === 'details' && (
-                            <div className="space-y-4">
-                                <div className="grid gap-3 sm:grid-cols-2">
-                                    <div className="rounded-xl border bg-background p-4">
-                                        <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                                            Session
-                                        </p>
-                                        <p className="mt-2 text-sm font-medium">
-                                            {selectedSession?.id || 'No session selected'}
-                                        </p>
-                                        <p className="mt-1 text-xs text-muted-foreground">
-                                            {selectedSession ? formatUrlDisplay(selectedSession.url) : ''}
-                                        </p>
-                                    </div>
-
-                                    <div className="rounded-xl border bg-background p-4">
-                                        <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                                            Owner
-                                        </p>
-                                        <p className="mt-2 text-sm font-medium">
-                                            {owner?.email || 'Unassigned'}
-                                        </p>
-                                        <p className="mt-1 text-xs text-muted-foreground">
-                                            {owner?.role || 'unknown role'}
-                                        </p>
-                                    </div>
-
-                                    <div className="rounded-xl border bg-background p-4">
-                                        <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                                            Events
-                                        </p>
-                                        <p className="mt-2 text-sm font-medium">
-                                            {selectedSession?.eventCount ?? 0}
-                                        </p>
-                                    </div>
-
-                                    <div className="rounded-xl border bg-background p-4">
-                                        <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                                            Duration
-                                        </p>
-                                        <p className="mt-2 text-sm font-medium">
-                                            {selectedSession
-                                                ? formatDuration(selectedSession.durationMs)
-                                                : '0s'}
-                                        </p>
+                            <div className="max-h-[640px] overflow-auto space-y-4">
+                                <div className="rounded-xl border bg-background p-4">
+                                    <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                                        Session overview
+                                    </p>
+                                    <div className="mt-3 space-y-2">
+                                        <div>
+                                            <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+                                                Session id
+                                            </p>
+                                            <p className="mt-1 break-all text-sm font-medium text-foreground">
+                                                {selectedSession?.id || 'No session selected'}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+                                                Owner
+                                            </p>
+                                            <p className="mt-1 text-sm text-foreground">
+                                                {owner?.email || 'Unassigned'}
+                                            </p>
+                                            <p className="mt-1 text-xs text-muted-foreground">
+                                                {owner?.role || 'unknown role'}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+                                                IP Address
+                                            </p>
+                                            <p className="mt-1 text-sm font-mono text-foreground">
+                                                {selectedSession?.ipAddress || '—'}
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
 
-                                <div className="rounded-xl border bg-background p-4 text-sm text-muted-foreground">
+                                <div className="rounded-xl border bg-background p-4">
                                     <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                                        Selected event
+                                        Recording stats
                                     </p>
-                                    {selectedEvent ? (
-                                        <div className="mt-3 space-y-2">
-                                            <p className="font-medium text-foreground">
-                                                {selectedEvent.label}
+                                    <div className="mt-3 space-y-2">
+                                        <div>
+                                            <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+                                                Events captured
                                             </p>
-                                            {selectedEvent.detail && (
-                                                <p className="text-xs text-muted-foreground">
-                                                    {selectedEvent.detail}
-                                                </p>
-                                            )}
-                                            <p className="font-mono text-xs text-muted-foreground">
-                                                #{selectedEvent.index + 1} · {selectedEvent.timeLabel}
+                                            <p className="mt-1 text-sm font-medium text-foreground">
+                                                {selectedSession?.eventCount ?? 0}
                                             </p>
                                         </div>
-                                    ) : (
-                                        <p className="mt-2 text-xs text-muted-foreground">
-                                            Choose an event from the Events tab to inspect it here.
-                                        </p>
-                                    )}
-                                </div>
-
-                                <div className="rounded-xl border bg-background p-4 text-sm text-muted-foreground">
-                                    <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                                        Selected page
-                                    </p>
-                                    {selectedPage ? (
-                                        <div className="mt-3 space-y-2">
-                                            <p className="font-medium text-foreground">
-                                                {selectedPage.label}
+                                        <div>
+                                            <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+                                                Duration
                                             </p>
-                                            <p className="text-xs text-muted-foreground">
-                                                {formatUrlDisplay(selectedPage.url)}
-                                            </p>
-                                            <p className="font-mono text-xs text-muted-foreground">
-                                                #{selectedPage.eventIndex + 1} · {formatDate(selectedPage.firstSeenAt)}
+                                            <p className="mt-1 text-sm font-medium text-foreground">
+                                                {selectedSession
+                                                    ? formatDuration(selectedSession.durationMs)
+                                                    : '0s'}
                                             </p>
                                         </div>
-                                    ) : (
-                                        <p className="mt-2 text-xs text-muted-foreground">
-                                            Choose a page from the Pages tab to inspect it here.
-                                        </p>
-                                    )}
+                                        <div>
+                                            <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+                                                Started
+                                            </p>
+                                            <p className="mt-1 text-sm text-foreground">
+                                                {selectedSession
+                                                    ? formatDate(selectedSession.startedAt)
+                                                    : '—'}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+                                                Last event
+                                            </p>
+                                            <p className="mt-1 text-sm text-foreground">
+                                                {selectedSession
+                                                    ? formatDate(selectedSession.lastEventAt)
+                                                    : '—'}
+                                            </p>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div className="rounded-xl border bg-accent/30 p-4 text-sm text-muted-foreground">
                                     <div className="flex items-center gap-2 font-medium text-foreground">
                                         <Info className="h-4 w-4 text-primary" />
-                                        Session metadata
+                                        Browser info
                                     </div>
-                                    <div className="mt-3 space-y-2 text-xs text-muted-foreground">
-                                        <p>Started: {selectedSession ? formatDate(selectedSession.startedAt) : '—'}</p>
-                                        <p>Last event: {selectedSession ? formatDate(selectedSession.lastEventAt) : '—'}</p>
-                                        <p className="break-all">User agent: {selectedSession?.userAgent || '—'}</p>
-                                    </div>
+                                    <p className="mt-3 break-all text-xs leading-5 text-muted-foreground">
+                                        {selectedSession?.userAgent ||
+                                            'No user agent captured for this session.'}
+                                    </p>
                                 </div>
                             </div>
                         )}
                     </CardContent>
                 </Card>
             </section>
-
-            <Card>
-                <CardHeader>
-                    <CardTitle>Session history</CardTitle>
-                    <CardDescription>
-                        Browse the captured sessions for the currently filtered visitor list.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    {filteredSessions.length === 0 ? (
-                        <p className="text-sm text-muted-foreground">No sessions recorded yet.</p>
-                    ) : (
-                        <div className="flex gap-3 overflow-x-auto pb-2">
-                            {filteredSessions.map((session) => {
-                                const sessionOwner = userMap.get(session.userId);
-                                const active = selectedSessionId === session.id;
-
-                                return (
-                                    <button
-                                        key={session.id}
-                                        type="button"
-                                        onClick={() => {
-                                            setSelectedSessionId(session.id);
-                                            setSelectedTab('events');
-                                        }}
-                                        className={`min-w-[220px] flex-1 shrink-0 rounded-2xl border p-4 text-left transition-colors ${active ? 'border-primary bg-primary/5' : 'bg-background hover:bg-accent/40'}`}
-                                    >
-                                        <div className="flex items-start justify-between gap-3">
-                                            <div>
-                                                <p className="font-mono text-sm font-semibold">
-                                                    {session.id.slice(0, 8)}
-                                                </p>
-                                                <p className="mt-1 text-xs text-muted-foreground">
-                                                    {formatDate(session.startedAt)}
-                                                </p>
-                                            </div>
-                                            <Badge variant="outline" className="text-[10px]">
-                                                {session.eventCount} events
-                                            </Badge>
-                                        </div>
-
-                                        <div className="mt-3 space-y-1 text-xs text-muted-foreground">
-                                            <p className="truncate">{formatUrlDisplay(session.url)}</p>
-                                            <p className="flex items-center gap-1">
-                                                <User className="h-3 w-3" />
-                                                {sessionOwner?.email || 'Unknown user'}
-                                            </p>
-                                            <p className="flex items-center gap-1">
-                                                <MousePointerClick className="h-3 w-3" />
-                                                {formatDuration(session.durationMs)}
-                                            </p>
-                                        </div>
-
-                                        <div className="mt-3 flex items-center gap-2">
-                                            <span className="text-xs font-medium text-primary">
-                                                Open replay
-                                            </span>
-                                            {isLiveSession(session) && (
-                                                <span className="text-xs text-muted-foreground">
-                                                    Live available
-                                                </span>
-                                            )}
-                                        </div>
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    )}
-                </CardContent>
-            </Card>
         </div>
     );
 }
