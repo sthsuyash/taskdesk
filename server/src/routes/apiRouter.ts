@@ -4,8 +4,8 @@ import {
     getAuthTokenFromRequest,
     getCurrentUserFromRequest,
     setAuthCookie,
-} from '../auth.js';
-import type { AuthRole, Store, TaskStatus } from '../db/store.js';
+} from '@/auth.js';
+import type { AuthRole, Store, TaskStatus } from '@/db/store.js';
 
 interface ApiRouterDependencies {
     store: Store;

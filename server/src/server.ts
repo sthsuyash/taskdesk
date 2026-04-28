@@ -1,9 +1,9 @@
 import { type Server, createServer } from 'http';
-import { createApp } from './app/createApp.js';
-import { env } from './config/env.js';
-import { createStore } from './db/store.js';
-import { createLiveServer } from './live/createLiveServer.js';
-import { createApiRouter } from './routes/apiRouter.js';
+import { createApp } from '@/app/createApp.js';
+import { env } from '@/config/env.js';
+import { createStore } from '@/db/store.js';
+import { createLiveServer } from '@/live/createLiveServer.js';
+import { createApiRouter } from '@/routes/apiRouter.js';
 
 const DB_INIT_MAX_RETRIES = 10;
 const DB_INIT_RETRY_DELAY_MS = 1000;

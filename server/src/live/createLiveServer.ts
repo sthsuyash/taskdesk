@@ -1,7 +1,7 @@
 import type { Server } from 'http';
 import { type RawData, type WebSocket, WebSocketServer } from 'ws';
-import { getCurrentUserFromCookieHeader } from '../auth.js';
-import type { Store } from '../db/store.js';
+import { getCurrentUserFromCookieHeader } from '@/auth.js';
+import type { Store } from '@/db/store.js';
 
 interface LiveServerDependencies {
     server: Server;

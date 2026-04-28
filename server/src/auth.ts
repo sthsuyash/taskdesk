@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
-import { env } from './config/env.js';
-import type { Store } from './db/store.js';
+import { env } from '@/config/env.js';
+import type { Store } from '@/db/store.js';
 
 export function parseCookies(rawCookieHeader?: string) {
     return (rawCookieHeader || '')
