@@ -268,8 +268,6 @@ export async function createStore({
                 user_id TEXT DEFAULT ''
             );
 
-            ALTER TABLE sessions ADD CONSTRAINT fk_sessions_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
-
             CREATE TABLE IF NOT EXISTS session_events (
                 id SERIAL PRIMARY KEY,
                 session_id TEXT NOT NULL,
@@ -287,17 +285,15 @@ export async function createStore({
                 status TEXT NOT NULL DEFAULT 'todo',
                 created_at TIMESTAMP NOT NULL DEFAULT NOW(),
                 updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
-                user_id TEXT DEFAULT ''
+                user_id TEXT
             );
 
             CREATE INDEX IF NOT EXISTS idx_tasks_created_at ON tasks(created_at DESC);
-
-            ALTER TABLE tasks ADD CONSTRAINT fk_tasks_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
         `);
 
-        await client.query(`ALTER TABLE sessions ADD COLUMN IF NOT EXISTS user_id TEXT DEFAULT ''`);
-            await client.query(`ALTER TABLE sessions ADD COLUMN IF NOT EXISTS ip_address TEXT DEFAULT ''`);
-        await client.query(`ALTER TABLE tasks ADD COLUMN IF NOT EXISTS user_id TEXT DEFAULT ''`);
+await client.query(`ALTER TABLE sessions ADD COLUMN IF NOT EXISTS user_id TEXT DEFAULT ''`);
+        await client.query(`ALTER TABLE sessions ADD COLUMN IF NOT EXISTS ip_address TEXT DEFAULT ''`);
+        await client.query(`ALTER TABLE tasks ADD COLUMN IF NOT EXISTS user_id TEXT`);
 
         if (bootstrapAdmin) {
             const adminEmail = normalizeEmail(bootstrapAdmin.email);
