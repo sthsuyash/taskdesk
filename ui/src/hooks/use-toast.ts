@@ -1,5 +1,5 @@
-import * as React from 'react';
 import type { ToastActionElement, ToastProps } from '@/components/ui/toast';
+import * as React from 'react';
 
 const TOAST_LIMIT = 4;
 const TOAST_REMOVE_DELAY = 1000000;
@@ -26,21 +26,21 @@ function genId() {
 
 type ActionType =
     | {
-        type: typeof actionTypes.ADD_TOAST;
-        toast: ToasterToast;
-    }
+          type: typeof actionTypes.ADD_TOAST;
+          toast: ToasterToast;
+      }
     | {
-        type: typeof actionTypes.UPDATE_TOAST;
-        toast: Partial<ToasterToast>;
-    }
+          type: typeof actionTypes.UPDATE_TOAST;
+          toast: Partial<ToasterToast>;
+      }
     | {
-        type: typeof actionTypes.DISMISS_TOAST;
-        toastId?: ToasterToast['id'];
-    }
+          type: typeof actionTypes.DISMISS_TOAST;
+          toastId?: ToasterToast['id'];
+      }
     | {
-        type: typeof actionTypes.REMOVE_TOAST;
-        toastId?: ToasterToast['id'];
-    };
+          type: typeof actionTypes.REMOVE_TOAST;
+          toastId?: ToasterToast['id'];
+      };
 
 interface State {
     toasts: ToasterToast[];
@@ -75,7 +75,9 @@ export const reducer = (state: State, action: ActionType): State => {
         case actionTypes.UPDATE_TOAST:
             return {
                 ...state,
-                toasts: state.toasts.map((t) => (t.id === action.toast.id ? { ...t, ...action.toast } : t)),
+                toasts: state.toasts.map((t) =>
+                    t.id === action.toast.id ? { ...t, ...action.toast } : t
+                ),
             };
 
         case actionTypes.DISMISS_TOAST: {
@@ -94,10 +96,10 @@ export const reducer = (state: State, action: ActionType): State => {
                 toasts: state.toasts.map((t) =>
                     t.id === toastId || toastId === undefined
                         ? {
-                            ...t,
-                            open: false,
-                        }
-                        : t,
+                              ...t,
+                              open: false,
+                          }
+                        : t
                 ),
             };
         }

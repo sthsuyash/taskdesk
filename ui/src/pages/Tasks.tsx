@@ -23,12 +23,11 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { useSessionRecorder } from '@/hooks/useSessionRecorder';
 import { useTasks } from '@/hooks/useTasks';
 import type { Task, TaskPayload } from '@/types';
-import { CheckCircle2, CircleDashed, Radio } from 'lucide-react';
+import { CheckCircle2, CircleDashed } from 'lucide-react';
 import { type ChangeEvent, type FormEvent, useEffect, useRef, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 
 const initialForm: TaskPayload = {
     title: '',
@@ -36,9 +35,8 @@ const initialForm: TaskPayload = {
     status: 'todo',
 };
 
-export default function Home() {
+export default function Tasks() {
     const { tasks, loading, error, addTask, editTask, removeTask, counts } = useTasks();
-    const { sessionId, recordingState, emitCustomEvent } = useSessionRecorder();
 
     const [activeTask, setActiveTask] = useState<Task | null>(null);
     const [form, setForm] = useState<TaskPayload>(initialForm);
@@ -76,12 +74,7 @@ export default function Home() {
     const handleCreate = async (payload: TaskPayload) => {
         setSubmitting(true);
         try {
-            const task = await addTask(payload);
-            emitCustomEvent('task-created', {
-                taskId: task.id,
-                title: task.title,
-                status: task.status,
-            });
+            await addTask(payload);
             setForm(initialForm);
             toast({
                 title: 'Task created',
@@ -103,12 +96,7 @@ export default function Home() {
         if (!activeTask) return;
         setSubmitting(true);
         try {
-            const task = await editTask(activeTask.id, payload);
-            emitCustomEvent('task-updated', {
-                taskId: task.id,
-                title: task.title,
-                status: task.status,
-            });
+            await editTask(activeTask.id, payload);
             setActiveTask(null);
             toast({
                 title: 'Task updated',
@@ -129,15 +117,10 @@ export default function Home() {
     const toggleTask = async (task: Task) => {
         try {
             const nextStatus = task.status === 'done' ? 'todo' : 'done';
-            const updatedTask = await editTask(task.id, {
+            await editTask(task.id, {
                 title: task.title,
                 description: task.description,
                 status: nextStatus,
-            });
-            emitCustomEvent('task-status-changed', {
-                taskId: updatedTask.id,
-                title: updatedTask.title,
-                status: updatedTask.status,
             });
             toast({
                 title: 'Task status changed',
@@ -155,12 +138,7 @@ export default function Home() {
 
     const handleDelete = async (taskId: string) => {
         try {
-            const taskToDelete = tasks.find((task) => task.id === taskId);
             await removeTask(taskId);
-            emitCustomEvent('task-deleted', {
-                taskId,
-                title: taskToDelete?.title,
-            });
             toast({
                 title: 'Task deleted',
                 description: 'Task removed from your list.',
@@ -191,30 +169,23 @@ export default function Home() {
         await handleCreate(form);
     };
 
-    const recorderBadgeLabel =
-        recordingState === 'error'
-            ? 'Recorder error'
-            : sessionId
-              ? `Recording: ${sessionId.slice(0, 8)}...`
-              : 'Recorder initializing';
-
-    const recorderBadgeVariant = recordingState === 'error' ? 'destructive' : 'secondary';
-
     return (
         <div className="space-y-6">
             <section className="rounded-2xl border bg-card p-6 shadow-sm">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <h2 className="text-2xl font-semibold tracking-tight">Tasks Workspace</h2>
+                        <h2 className="text-2xl font-semibold tracking-tight">Tasks</h2>
                         <p className="text-sm text-muted-foreground">
-                            Manage tasks while TaskDesk records your session.
+                            Create, update, and close work items without leaving the workspace.
                         </p>
                     </div>
-                    <div className="flex flex-wrap items-center gap-2">
-                        <Badge variant={recorderBadgeVariant} className="w-fit">
-                            <Radio className="mr-2 h-3.5 w-3.5" />
-                            {recorderBadgeLabel}
-                        </Badge>
+                    <div className="flex flex-wrap gap-2">
+                        <Button asChild variant="outline">
+                            <Link to="/">Back to overview</Link>
+                        </Button>
+                        <Button asChild>
+                            <Link to="/tasks?action=new">New task</Link>
+                        </Button>
                     </div>
                 </div>
             </section>
@@ -353,6 +324,9 @@ export default function Home() {
                                             )}
                                         </button>
                                         <div className="flex items-center gap-2">
+                                            <Button size="sm" variant="ghost" asChild>
+                                                <Link to={`/tasks/${task.id}`}>Details</Link>
+                                            </Button>
                                             <Badge
                                                 variant={
                                                     task.status === 'done' ? 'secondary' : 'outline'
@@ -410,10 +384,6 @@ export default function Home() {
                     </CardContent>
                 </Card>
             </section>
-
-            <div className="text-xs text-muted-foreground">
-                Recorder state: <span className="font-medium">{recordingState}</span>
-            </div>
         </div>
     );
 }

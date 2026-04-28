@@ -1,6 +1,11 @@
-import { create } from 'zustand';
-import { getCurrentUser, login as loginRequest, logout as logoutRequest, register as registerRequest } from '@/services/authApi';
+import {
+    getCurrentUser,
+    login as loginRequest,
+    logout as logoutRequest,
+    register as registerRequest,
+} from '@/services/authApi';
 import type { AuthUser, LoginPayload, RegisterPayload } from '@/types';
+import { create } from 'zustand';
 
 interface AuthState {
     user: AuthUser | null;

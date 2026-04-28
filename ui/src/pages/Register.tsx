@@ -1,11 +1,11 @@
-import { type FormEvent, type ChangeEvent, useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { useAuthStore } from '@/store/authStore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
+import { useAuthStore } from '@/store/authStore';
+import { type ChangeEvent, type FormEvent, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 
 export default function Register() {
     const navigate = useNavigate();
@@ -31,11 +31,13 @@ export default function Register() {
     };
 
     return (
-        <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="flex min-h-screen items-center justify-center bg-background p-4">
             <Card className="w-full max-w-sm">
                 <CardHeader>
                     <CardTitle>Create account</CardTitle>
-                    <CardDescription>Register to start tracking tasks and recording sessions</CardDescription>
+                    <CardDescription>
+                        Register to start tracking tasks and recording sessions
+                    </CardDescription>
                 </CardHeader>
                 <CardContent>
                     <form onSubmit={handleSubmit} className="space-y-4">
@@ -46,7 +48,9 @@ export default function Register() {
                                 type="email"
                                 placeholder="you@example.com"
                                 value={email}
-                                onChange={(e: ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
+                                onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                                    setEmail(e.target.value)
+                                }
                                 required
                             />
                         </div>
@@ -57,7 +61,9 @@ export default function Register() {
                                 type="password"
                                 placeholder="At least 8 characters"
                                 value={password}
-                                onChange={(e: ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
+                                onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                                    setPassword(e.target.value)
+                                }
                                 required
                                 minLength={8}
                             />

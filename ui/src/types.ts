@@ -19,6 +19,21 @@ export interface SessionEventsResponse {
     events: unknown[];
 }
 
+export interface SessionSummary {
+    id: string;
+    url: string;
+    userAgent: string;
+    startedAt: number;
+    lastEventAt: number;
+    eventCount: number;
+    durationMs: number;
+    userId: string;
+}
+
+export interface SessionsResponse {
+    sessions: SessionSummary[];
+}
+
 export interface TasksResponse {
     tasks: Task[];
 }

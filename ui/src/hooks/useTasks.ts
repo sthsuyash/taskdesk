@@ -1,11 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-    createTask,
-    deleteTask,
-    listTasks,
-    updateTask,
-} from '@/services/tasksApi';
+import { createTask, deleteTask, listTasks, updateTask } from '@/services/tasksApi';
 import type { Task, TaskPayload } from '@/types';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 export function useTasks() {
     const [tasks, setTasks] = useState<Task[]>([]);

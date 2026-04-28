@@ -1,15 +1,19 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import AppShell from '@/components/layout/AppShell';
-import { Toaster } from '@/components/ui/toaster';
 import { AuthInit } from '@/auth/AuthInit';
 import RequireAuth from '@/auth/RequireAuth';
-import Home from '@/pages/Home';
-import Login from '@/pages/Login';
-import Register from '@/pages/Register';
-import Profile from '@/pages/Profile';
+import AppShell from '@/components/layout/AppShell';
+import { Toaster } from '@/components/ui/toaster';
 import '@/index.css';
+import Dashboard from '@/pages/Dashboard';
+import Login from '@/pages/Login';
+import Profile from '@/pages/Profile';
+import Recording from '@/pages/Recording';
+import Register from '@/pages/Register';
+import Sessions from '@/pages/Sessions';
+import TaskDetail from '@/pages/TaskDetail';
+import Tasks from '@/pages/Tasks';
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -38,7 +42,47 @@ ReactDOM.createRoot(rootElement).render(
                         element={
                             <RequireAuth>
                                 <AppShell>
-                                    <Home />
+                                    <Dashboard />
+                                </AppShell>
+                            </RequireAuth>
+                        }
+                    />
+                    <Route
+                        path="/tasks"
+                        element={
+                            <RequireAuth>
+                                <AppShell>
+                                    <Tasks />
+                                </AppShell>
+                            </RequireAuth>
+                        }
+                    />
+                    <Route
+                        path="/tasks/:taskId"
+                        element={
+                            <RequireAuth>
+                                <AppShell>
+                                    <TaskDetail />
+                                </AppShell>
+                            </RequireAuth>
+                        }
+                    />
+                    <Route
+                        path="/sessions"
+                        element={
+                            <RequireAuth>
+                                <AppShell>
+                                    <Sessions />
+                                </AppShell>
+                            </RequireAuth>
+                        }
+                    />
+                    <Route
+                        path="/recording"
+                        element={
+                            <RequireAuth>
+                                <AppShell>
+                                    <Recording />
                                 </AppShell>
                             </RequireAuth>
                         }
@@ -48,5 +92,5 @@ ReactDOM.createRoot(rootElement).render(
                 <Toaster />
             </AuthInit>
         </BrowserRouter>
-    </React.StrictMode>,
+    </React.StrictMode>
 );
