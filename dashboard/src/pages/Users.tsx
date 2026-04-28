@@ -19,15 +19,15 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import { formatDate } from '@/lib/utils';
 import { createUser, deleteUser, listUsers, updateUser } from '@/services/usersApi';
 import { useAuthStore } from '@/store/authStore';
 import type { AuthUser } from '@/types';
-import { formatDate } from '@/lib/utils';
 import {
+    ChevronDown,
     ChevronLeft,
     ChevronRight,
     ChevronUp,
-    ChevronDown,
     Pencil,
     Plus,
     Search,
@@ -99,7 +99,11 @@ export default function Users() {
         async (p: number) => {
             setLoading(true);
             try {
-                const data = await listUsers(p, limit, filterRole === 'all' ? undefined : filterRole);
+                const data = await listUsers(
+                    p,
+                    limit,
+                    filterRole === 'all' ? undefined : filterRole
+                );
                 setUsers(data.users);
                 setTotal(data.total);
                 setTotalPages(data.totalPages);
@@ -133,7 +137,8 @@ export default function Users() {
     const visibleRoles = useMemo(() => {
         if (!actor) return [];
         if (actor.role === 'admin') return ROLES;
-        if (actor.role === 'support') return ROLES.filter(r => r.value === 'all' || r.value === 'user');
+        if (actor.role === 'support')
+            return ROLES.filter((r) => r.value === 'all' || r.value === 'user');
         return [];
     }, [actor]);
 
@@ -314,7 +319,9 @@ export default function Users() {
                                                     type="button"
                                                     onClick={() => {
                                                         if (sortBy === 'email') {
-                                                            setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                                                            setSortOrder(
+                                                                sortOrder === 'asc' ? 'desc' : 'asc'
+                                                            );
                                                         } else {
                                                             setSortBy('email');
                                                             setSortOrder('asc');
@@ -323,11 +330,12 @@ export default function Users() {
                                                     className="flex items-center gap-1 hover:text-foreground"
                                                 >
                                                     Email
-                                                    {sortBy === 'email' && (
-                                                        sortOrder === 'asc'
-                                                            ? <ChevronUp className="h-3 w-3" />
-                                                            : <ChevronDown className="h-3 w-3" />
-                                                    )}
+                                                    {sortBy === 'email' &&
+                                                        (sortOrder === 'asc' ? (
+                                                            <ChevronUp className="h-3 w-3" />
+                                                        ) : (
+                                                            <ChevronDown className="h-3 w-3" />
+                                                        ))}
                                                 </button>
                                             </th>
                                             <th className="pb-3 font-medium">
@@ -335,7 +343,9 @@ export default function Users() {
                                                     type="button"
                                                     onClick={() => {
                                                         if (sortBy === 'role') {
-                                                            setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                                                            setSortOrder(
+                                                                sortOrder === 'asc' ? 'desc' : 'asc'
+                                                            );
                                                         } else {
                                                             setSortBy('role');
                                                             setSortOrder('asc');
@@ -344,11 +354,12 @@ export default function Users() {
                                                     className="flex items-center gap-1 hover:text-foreground"
                                                 >
                                                     Role
-                                                    {sortBy === 'role' && (
-                                                        sortOrder === 'asc'
-                                                            ? <ChevronUp className="h-3 w-3" />
-                                                            : <ChevronDown className="h-3 w-3" />
-                                                    )}
+                                                    {sortBy === 'role' &&
+                                                        (sortOrder === 'asc' ? (
+                                                            <ChevronUp className="h-3 w-3" />
+                                                        ) : (
+                                                            <ChevronDown className="h-3 w-3" />
+                                                        ))}
                                                 </button>
                                             </th>
                                             <th className="pb-3 font-medium">
@@ -356,7 +367,9 @@ export default function Users() {
                                                     type="button"
                                                     onClick={() => {
                                                         if (sortBy === 'created_at') {
-                                                            setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                                                            setSortOrder(
+                                                                sortOrder === 'asc' ? 'desc' : 'asc'
+                                                            );
                                                         } else {
                                                             setSortBy('created_at');
                                                             setSortOrder('desc');
@@ -365,11 +378,12 @@ export default function Users() {
                                                     className="flex items-center gap-1 hover:text-foreground"
                                                 >
                                                     Created
-                                                    {sortBy === 'created_at' && (
-                                                        sortOrder === 'asc'
-                                                            ? <ChevronUp className="h-3 w-3" />
-                                                            : <ChevronDown className="h-3 w-3" />
-                                                    )}
+                                                    {sortBy === 'created_at' &&
+                                                        (sortOrder === 'asc' ? (
+                                                            <ChevronUp className="h-3 w-3" />
+                                                        ) : (
+                                                            <ChevronDown className="h-3 w-3" />
+                                                        ))}
                                                 </button>
                                             </th>
                                             <th className="pb-3 text-right font-medium">Actions</th>
@@ -510,7 +524,9 @@ export default function Users() {
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="user">User</SelectItem>
-                                    {canChangeRole && <SelectItem value="support">Support</SelectItem>}
+                                    {canChangeRole && (
+                                        <SelectItem value="support">Support</SelectItem>
+                                    )}
                                 </SelectContent>
                             </Select>
                         </div>
