@@ -673,8 +673,8 @@ async listSessions(actor, page = 1, limit = 50) {
 async listTasks(actor, page = 1, limit = 20, status?: TaskStatus) {
             const offset = (page - 1) * limit;
             const baseQuery = actor?.role === 'admin' || actor?.role === 'support'
-                ? { text: 'SELECT id, title, description, status, create_at, update_at, user_id FROM tasks', countText: 'SELECT COUNT(*) FROM tasks' }
-                : { text: 'SELECT id, title, description, status, create_at, update_at, user_id FROM tasks WHERE user_id = $1', countText: 'SELECT COUNT(*) FROM tasks WHERE user_id = $1', param: [actor?.id || defaultOwnerUserId || ''] };
+                ? { text: 'SELECT id, title, description, status, created_at, updated_at, user_id FROM tasks', countText: 'SELECT COUNT(*) FROM tasks' }
+                : { text: 'SELECT id, title, description, status, created_at, updated_at, user_id FROM tasks WHERE user_id = $1', countText: 'SELECT COUNT(*) FROM tasks WHERE user_id = $1', param: [actor?.id || defaultOwnerUserId || ''] };
 
             let whereClause = '';
             let params: unknown[] = [];
@@ -687,7 +687,7 @@ async listTasks(actor, page = 1, limit = 20, status?: TaskStatus) {
 
             const [countResult, tasksResult] = await Promise.all([
                 pool.query(`${baseQuery.countText}${whereClause ? ' WHERE' + whereClause.split(' WHERE ')[1] : ''}`, params),
-                pool.query(`${baseQuery.text}${whereClause} ORDER BY create_at DESC LIMIT $1 OFFSET $2`, [limit, offset]),
+                pool.query(`${baseQuery.text}${whereClause} ORDER BY created_at DESC LIMIT $1 OFFSET $2`, [limit, offset]),
             ]);
 
             const total = parseInt(countResult.rows[0]?.count || '0', 10);
