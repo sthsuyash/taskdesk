@@ -22,9 +22,12 @@ import { useToast } from '@/hooks/use-toast';
 import { createUser, deleteUser, listUsers, updateUser } from '@/services/usersApi';
 import { useAuthStore } from '@/store/authStore';
 import type { AuthUser } from '@/types';
+import { formatDate } from '@/lib/utils';
 import {
     ChevronLeft,
     ChevronRight,
+    ChevronUp,
+    ChevronDown,
     Pencil,
     Plus,
     Search,
@@ -33,6 +36,7 @@ import {
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+const PAGE_SIZES = [10, 25, 50, 100] as const;
 const ROLES: { label: string; value: AuthUser['role'] | 'all' }[] = [
     { label: 'All', value: 'all' },
     { label: 'Admin', value: 'admin' },
@@ -64,6 +68,9 @@ export default function Users() {
     const [total, setTotal] = useState(0);
     const [totalPages, setTotalPages] = useState(1);
     const [page, setPage] = useState(1);
+    const [limit, setLimit] = useState(20);
+    const [sortBy, setSortBy] = useState<'created_at' | 'email' | 'role'>('created_at');
+    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
     const [filterRole, setFilterRole] = useState<AuthUser['role'] | 'all'>('all');
     const [search, setSearch] = useState('');
     const [loading, setLoading] = useState(false);
@@ -92,7 +99,7 @@ export default function Users() {
         async (p: number) => {
             setLoading(true);
             try {
-                const data = await listUsers(p, 20, filterRole === 'all' ? undefined : filterRole);
+                const data = await listUsers(p, limit, filterRole === 'all' ? undefined : filterRole);
                 setUsers(data.users);
                 setTotal(data.total);
                 setTotalPages(data.totalPages);
@@ -103,12 +110,16 @@ export default function Users() {
                 setLoading(false);
             }
         },
-        [filterRole, toast]
+        [filterRole, limit, toast]
     );
 
     useEffect(() => {
         void load(1);
     }, [load]);
+
+    useEffect(() => {
+        setPage(1);
+    }, [limit, filterRole, sortBy, sortOrder]);
 
     const roleCounts = {
         all: total,
@@ -118,6 +129,14 @@ export default function Users() {
     };
 
     const actor = useAuthStore((s) => s.user);
+
+    const visibleRoles = useMemo(() => {
+        if (!actor) return [];
+        if (actor.role === 'admin') return ROLES;
+        if (actor.role === 'support') return ROLES.filter(r => r.value === 'all' || r.value === 'user');
+        return [];
+    }, [actor]);
+
     const canModify = useMemo(
         () => (target: AuthUser) => {
             if (!actor) return false;
@@ -131,6 +150,9 @@ export default function Users() {
         },
         [actor]
     );
+    const canCreate = actor?.role === 'admin' || actor?.role === 'support';
+    const canSeeAll = actor?.role === 'admin';
+    const canChangeRole = actor?.role === 'admin';
 
     const openEdit = (user: AuthUser) => {
         setSelectedUser(user);
@@ -203,8 +225,6 @@ export default function Users() {
         }
     };
 
-    const formatDate = (ts: number) => new Date(ts).toLocaleDateString();
-
     const filteredUsers = search
         ? users.filter((u) => u.email.toLowerCase().includes(search.toLowerCase()))
         : users;
@@ -217,7 +237,7 @@ export default function Users() {
                         <h2 className="text-2xl font-semibold tracking-tight">Users</h2>
                         <p className="text-sm text-muted-foreground">{total} accounts total</p>
                     </div>
-                    {actor?.role === 'admin' && (
+                    {canCreate && (
                         <Button
                             onClick={() => {
                                 setSelectedUser(null);
@@ -243,29 +263,31 @@ export default function Users() {
                         className="h-10 w-full rounded-md border border-input bg-background pl-10 pr-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                     />
                 </div>
-                <div className="flex gap-1 rounded-lg border bg-background p-1">
-                    {ROLES.map((r) => (
-                        <button
-                            key={r.value}
-                            type="button"
-                            onClick={() => setFilterRole(r.value)}
-                            className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                                filterRole === r.value
-                                    ? 'bg-primary text-primary-foreground'
-                                    : 'text-muted-foreground hover:text-foreground'
-                            }`}
-                        >
-                            {r.label}
-                            {r.value !== 'all' && (
-                                <span
-                                    className={`text-[10px] ${filterRole === r.value ? 'opacity-70' : 'text-muted-foreground'}`}
-                                >
-                                    {roleCounts[r.value as keyof typeof roleCounts] ?? 0}
-                                </span>
-                            )}
-                        </button>
-                    ))}
-                </div>
+                {canSeeAll && (
+                    <div className="flex gap-1 rounded-lg border bg-background p-1">
+                        {visibleRoles.map((r) => (
+                            <button
+                                key={r.value}
+                                type="button"
+                                onClick={() => setFilterRole(r.value)}
+                                className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                                    filterRole === r.value
+                                        ? 'bg-primary text-primary-foreground'
+                                        : 'text-muted-foreground hover:text-foreground'
+                                }`}
+                            >
+                                {r.label}
+                                {r.value !== 'all' && (
+                                    <span
+                                        className={`text-[10px] ${filterRole === r.value ? 'opacity-70' : 'text-muted-foreground'}`}
+                                    >
+                                        {roleCounts[r.value as keyof typeof roleCounts] ?? 0}
+                                    </span>
+                                )}
+                            </button>
+                        ))}
+                    </div>
+                )}
             </div>
 
             <Card>
@@ -287,9 +309,69 @@ export default function Users() {
                                 <table className="w-full text-sm">
                                     <thead>
                                         <tr className="border-b text-left">
-                                            <th className="pb-3 font-medium">Email</th>
-                                            <th className="pb-3 font-medium">Role</th>
-                                            <th className="pb-3 font-medium">Created</th>
+                                            <th className="pb-3 font-medium">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        if (sortBy === 'email') {
+                                                            setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                                                        } else {
+                                                            setSortBy('email');
+                                                            setSortOrder('asc');
+                                                        }
+                                                    }}
+                                                    className="flex items-center gap-1 hover:text-foreground"
+                                                >
+                                                    Email
+                                                    {sortBy === 'email' && (
+                                                        sortOrder === 'asc'
+                                                            ? <ChevronUp className="h-3 w-3" />
+                                                            : <ChevronDown className="h-3 w-3" />
+                                                    )}
+                                                </button>
+                                            </th>
+                                            <th className="pb-3 font-medium">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        if (sortBy === 'role') {
+                                                            setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                                                        } else {
+                                                            setSortBy('role');
+                                                            setSortOrder('asc');
+                                                        }
+                                                    }}
+                                                    className="flex items-center gap-1 hover:text-foreground"
+                                                >
+                                                    Role
+                                                    {sortBy === 'role' && (
+                                                        sortOrder === 'asc'
+                                                            ? <ChevronUp className="h-3 w-3" />
+                                                            : <ChevronDown className="h-3 w-3" />
+                                                    )}
+                                                </button>
+                                            </th>
+                                            <th className="pb-3 font-medium">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        if (sortBy === 'created_at') {
+                                                            setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                                                        } else {
+                                                            setSortBy('created_at');
+                                                            setSortOrder('desc');
+                                                        }
+                                                    }}
+                                                    className="flex items-center gap-1 hover:text-foreground"
+                                                >
+                                                    Created
+                                                    {sortBy === 'created_at' && (
+                                                        sortOrder === 'asc'
+                                                            ? <ChevronUp className="h-3 w-3" />
+                                                            : <ChevronDown className="h-3 w-3" />
+                                                    )}
+                                                </button>
+                                            </th>
                                             <th className="pb-3 text-right font-medium">Actions</th>
                                         </tr>
                                     </thead>
@@ -345,35 +427,52 @@ export default function Users() {
 
                             {search && (
                                 <p className="mt-2 text-xs text-muted-foreground">
-                                    Showing {filteredUsers.length} of {users.length} users
+                                    Showing {users.length} of {total} users
                                 </p>
                             )}
 
-                            {totalPages > 1 && (
-                                <div className="mt-4 flex items-center justify-between">
-                                    <p className="text-xs text-muted-foreground">
-                                        Page {page} of {totalPages}
-                                    </p>
-                                    <div className="flex gap-2">
-                                        <Button
-                                            size="sm"
-                                            variant="outline"
-                                            onClick={() => void load(page - 1)}
-                                            disabled={page <= 1}
-                                        >
-                                            <ChevronLeft className="h-4 w-4" />
-                                        </Button>
-                                        <Button
-                                            size="sm"
-                                            variant="outline"
-                                            onClick={() => void load(page + 1)}
-                                            disabled={page >= totalPages}
-                                        >
-                                            <ChevronRight className="h-4 w-4" />
-                                        </Button>
-                                    </div>
+                            <div className="mt-4 flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-xs text-muted-foreground">Show</span>
+                                    <Select
+                                        value={String(limit)}
+                                        onValueChange={(v) => setLimit(Number(v))}
+                                    >
+                                        <SelectTrigger className="h-8 w-20">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {PAGE_SIZES.map((size) => (
+                                                <SelectItem key={size} value={String(size)}>
+                                                    {size}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <span className="text-xs text-muted-foreground">per page</span>
                                 </div>
-                            )}
+                                <div className="flex items-center gap-2">
+                                    <p className="text-xs text-muted-foreground">
+                                        Page {page} of {totalPages || 1}
+                                    </p>
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => void load(page - 1)}
+                                        disabled={page <= 1}
+                                    >
+                                        <ChevronLeft className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => void load(page + 1)}
+                                        disabled={page >= totalPages}
+                                    >
+                                        <ChevronRight className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            </div>
                         </>
                     )}
                 </CardContent>
@@ -411,8 +510,7 @@ export default function Users() {
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="user">User</SelectItem>
-                                    <SelectItem value="support">Support</SelectItem>
-                                    <SelectItem value="admin">Admin</SelectItem>
+                                    {canChangeRole && <SelectItem value="support">Support</SelectItem>}
                                 </SelectContent>
                             </Select>
                         </div>
