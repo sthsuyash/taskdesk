@@ -1,3 +1,5 @@
+import compression from 'compression';
+import cors from 'cors';
 import express, {
     type ErrorRequestHandler,
     type Request,
@@ -5,8 +7,6 @@ import express, {
     type Response,
     type Router,
 } from 'express';
-import compression from 'compression';
-import cors from 'cors';
 
 interface CreateAppOptions {
     apiRouter: Router;
@@ -16,10 +16,12 @@ interface CreateAppOptions {
 export function createApp({ apiRouter, allowedOrigins = [] }: CreateAppOptions) {
     const app = express();
 
-    app.use(cors({
-        origin: allowedOrigins.length > 0 ? allowedOrigins : true,
-        credentials: true,
-    }));
+    app.use(
+        cors({
+            origin: allowedOrigins.length > 0 ? allowedOrigins : true,
+            credentials: true,
+        })
+    );
     app.use(compression());
     app.use(express.json());
 

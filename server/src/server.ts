@@ -1,9 +1,9 @@
-import { createServer, type Server } from 'http';
-import { env } from './config/env.js';
+import { type Server, createServer } from 'http';
 import { createApp } from './app/createApp.js';
+import { env } from './config/env.js';
 import { createStore } from './db/store.js';
-import { createApiRouter } from './routes/apiRouter.js';
 import { createLiveServer } from './live/createLiveServer.js';
+import { createApiRouter } from './routes/apiRouter.js';
 
 const DB_INIT_MAX_RETRIES = 10;
 const DB_INIT_RETRY_DELAY_MS = 1000;
@@ -15,11 +15,15 @@ async function waitForDatabase(connectionString: string, attempt = 1): Promise<b
         return true;
     } catch (error) {
         if (attempt >= DB_INIT_MAX_RETRIES) {
-            console.error(`\n[FATAL] Failed to connect to DB after ${DB_INIT_MAX_RETRIES} attempts`);
+            console.error(
+                `\n[FATAL] Failed to connect to DB after ${DB_INIT_MAX_RETRIES} attempts`
+            );
             return false;
         }
         const delay = DB_INIT_RETRY_DELAY_MS * attempt;
-        console.log(`[DB] Connection attempt ${attempt}/${DB_INIT_MAX_RETRIES} failed, retrying in ${delay}ms...`);
+        console.log(
+            `[DB] Connection attempt ${attempt}/${DB_INIT_MAX_RETRIES} failed, retrying in ${delay}ms...`
+        );
         await new Promise((resolve) => setTimeout(resolve, delay));
         return waitForDatabase(connectionString, attempt + 1);
     }
@@ -45,7 +49,7 @@ export async function startServer() {
         },
     });
 
-    let broadcastToViewers: (sessionId: string, events: unknown[]) => void = () => { };
+    let broadcastToViewers: (sessionId: string, events: unknown[]) => void = () => {};
     const apiRouter = createApiRouter({
         store,
         broadcastToViewers: (sessionId, events) => broadcastToViewers(sessionId, events),
@@ -91,7 +95,9 @@ API:
     const waitForServerReady = async (maxAttempts = 20, delayMs = 250): Promise<boolean> => {
         for (let attempt = 1; attempt <= maxAttempts; attempt++) {
             try {
-                const response = await fetch(`http://localhost:${env.port}/api/health`, { method: 'GET' });
+                const response = await fetch(`http://localhost:${env.port}/api/health`, {
+                    method: 'GET',
+                });
                 if (response.ok || response.status === 404) {
                     return true;
                 }
