@@ -23,8 +23,10 @@ import { useToast } from '@/hooks/use-toast';
 import { createTask, deleteTask, listTasks, updateTask } from '@/services/tasksApi';
 import { listUsers } from '@/services/usersApi';
 import type { AuthUser, Task, TaskPayload } from '@/types';
-import { CheckCircle2, CircleDashed, ListTodo, Pencil, Search, Trash2, User } from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, CheckCircle2, CircleDashed, ListTodo, Pencil, Plus, Search, Trash2, User } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+
+const PAGE_SIZES = [10, 25, 50, 100] as const;
 
 const initialForm: TaskPayload = {
     title: '',
@@ -36,7 +38,11 @@ export default function Tasks() {
     const { toast } = useToast();
     const [tasks, setTasks] = useState<Task[]>([]);
     const [users, setUsers] = useState<AuthUser[]>([]);
+    const [total, setTotal] = useState(0);
     const [loading, setLoading] = useState(true);
+    const [page, setPage] = useState(1);
+    const [limit, setLimit] = useState(20);
+    const [totalPages, setTotalPages] = useState(1);
     const [filterUser, setFilterUser] = useState<string>('all');
     const [filterStatus, setFilterStatus] = useState<string>('all');
     const [search, setSearch] = useState('');
@@ -50,19 +56,28 @@ export default function Tasks() {
     const load = useCallback(async () => {
         setLoading(true);
         try {
-            const [tasksData, usersData] = await Promise.all([listTasks(), listUsers(1, 100)]);
+            const [tasksData, usersData] = await Promise.all([
+                listTasks(page, limit, filterStatus === 'all' ? undefined : filterStatus),
+                listUsers(1, 100)
+            ]);
             setTasks(tasksData.tasks);
+            setTotal(tasksData.total);
+            setTotalPages(tasksData.totalPages);
             setUsers(usersData.users);
         } catch {
             toast({ title: 'Failed to load data', variant: 'destructive' });
         } finally {
             setLoading(false);
         }
-    }, [toast]);
+    }, [page, limit, filterStatus, toast]);
 
     useEffect(() => {
         void load();
     }, [load]);
+
+    useEffect(() => {
+        setPage(1);
+    }, [limit, filterStatus, search]);
 
     const userMap = useMemo(() => {
         const map = new Map<string, AuthUser>();
@@ -370,6 +385,31 @@ export default function Tasks() {
                             </table>
                         </div>
                     )}
+                    <div className="flex items-center justify-between border-t px-3 py-2">
+                        <div className="flex items-center gap-2">
+                            <span className="text-xs text-muted-foreground">Show</span>
+                            <Select value={String(limit)} onValueChange={(v) => setLimit(Number(v))}>
+                                <SelectTrigger className="h-8 w-20">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {PAGE_SIZES.map((size) => (
+                                        <SelectItem key={size} value={String(size)}>{size}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            <span className="text-xs text-muted-foreground">per page</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <p className="text-xs text-muted-foreground">Page {page} of {totalPages || 1}</p>
+                            <Button size="sm" variant="outline" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page <= 1}>
+                                <ChevronLeft className="h-4 w-4" />
+                            </Button>
+                            <Button size="sm" variant="outline" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page >= totalPages}>
+                                <ChevronRight className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    </div>
                 </CardContent>
             </Card>
 
