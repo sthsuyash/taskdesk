@@ -11,7 +11,7 @@ const features = [
   },
   {
     title: 'Session Recording',
-    description: 'Automatic session capture using rrweb - every click, scroll, and interaction.',
+    description: 'Automatic session capture using rrweb - every click, scroll and interaction.',
   },
   {
     title: 'Live Support',
