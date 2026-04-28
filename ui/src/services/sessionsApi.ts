@@ -15,8 +15,9 @@ export function postSessionEvents(sessionId: string, events: unknown[]) {
     );
 }
 
-export function listSessions() {
-    return apiClient.get<SessionsResponse>('/api/sessions');
+export function listSessions(page = 1, limit = 50) {
+    const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+    return apiClient.get<SessionsResponse>(`/api/sessions?${params}`);
 }
 
 export function getSessionEvents(sessionId: string) {

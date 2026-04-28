@@ -7,6 +7,7 @@ export interface Task {
     status: TaskStatus;
     createdAt: number;
     updatedAt: number;
+    userId: string;
 }
 
 export interface TaskPayload {
@@ -28,10 +29,12 @@ export interface SessionSummary {
     eventCount: number;
     durationMs: number;
     userId: string;
+    ipAddress: string;
 }
 
 export interface SessionsResponse {
     sessions: SessionSummary[];
+    total: number;
 }
 
 export interface TasksResponse {
