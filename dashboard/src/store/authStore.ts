@@ -1,6 +1,6 @@
-import { create } from 'zustand';
 import { getCurrentUser, login as loginRequest, logout as logoutRequest } from '@/services/authApi';
 import type { AuthUser, LoginPayload } from '@/types';
+import { create } from 'zustand';
 
 interface AuthState {
     user: AuthUser | null;

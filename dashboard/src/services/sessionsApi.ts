@@ -9,7 +9,10 @@ export function createSession() {
 }
 
 export function postSessionEvents(sessionId: string, events: unknown[]) {
-    return apiClient.post<{ ok: true; received: number; total: number }>(`/api/sessions/${sessionId}/events`, { events });
+    return apiClient.post<{ ok: true; received: number; total: number }>(
+        `/api/sessions/${sessionId}/events`,
+        { events }
+    );
 }
 
 export function listSessions() {

@@ -1,5 +1,5 @@
 import { apiClient } from '@/services/apiClient';
-import type { AuthUser, UsersResponse, UserPayload } from '@/types';
+import type { AuthUser, UserPayload, UsersResponse } from '@/types';
 
 export function listUsers(page = 1, limit = 20, role?: AuthUser['role']) {
     const params = new URLSearchParams({ page: String(page), limit: String(limit) });

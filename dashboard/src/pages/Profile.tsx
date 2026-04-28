@@ -1,14 +1,14 @@
-import { useState } from 'react';
-import { User as UserIcon } from 'lucide-react';
-import { useAuthStore } from '@/store/authStore';
-import { updateUser } from '@/services/usersApi';
-import type { AuthUser } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
+import { updateUser } from '@/services/usersApi';
+import { useAuthStore } from '@/store/authStore';
+import type { AuthUser } from '@/types';
+import { User as UserIcon } from 'lucide-react';
+import { useState } from 'react';
 
 interface ProfileForm {
     email: string;
@@ -28,7 +28,10 @@ export default function Profile() {
     const [form, setForm] = useState<ProfileForm>({ email: user?.email || '', password: '' });
     const [submitting, setSubmitting] = useState(false);
 
-    const canSave = form.email.length > 0 && (form.password.length >= 8 || form.password.length === 0) && (form.email !== user?.email || form.password.length >= 8);
+    const canSave =
+        form.email.length > 0 &&
+        (form.password.length >= 8 || form.password.length === 0) &&
+        (form.email !== user?.email || form.password.length >= 8);
 
     const handleSave = async () => {
         if (!user || !form.email) return;
@@ -72,7 +75,9 @@ export default function Profile() {
                     </div>
                     <div>
                         <h2 className="text-2xl font-semibold tracking-tight">Profile</h2>
-                        <p className="text-sm text-muted-foreground">Manage your account settings</p>
+                        <p className="text-sm text-muted-foreground">
+                            Manage your account settings
+                        </p>
                     </div>
                 </div>
             </section>
@@ -97,11 +102,21 @@ export default function Profile() {
                     <div className="space-y-2">
                         <Label>Role</Label>
                         <div className="flex">
-                            <Badge variant={user.role === 'admin' ? 'destructive' : user.role === 'support' ? 'default' : 'secondary'}>
+                            <Badge
+                                variant={
+                                    user.role === 'admin'
+                                        ? 'destructive'
+                                        : user.role === 'support'
+                                          ? 'default'
+                                          : 'secondary'
+                                }
+                            >
                                 {ROLE_LABELS[user.role]}
                             </Badge>
                         </div>
-                        <p className="text-xs text-muted-foreground">Contact admin to change your role</p>
+                        <p className="text-xs text-muted-foreground">
+                            Contact admin to change your role
+                        </p>
                     </div>
                     <div className="space-y-2">
                         <Label>New Password</Label>
@@ -111,9 +126,15 @@ export default function Profile() {
                             value={form.password}
                             onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
                         />
-                        <p className="text-xs text-muted-foreground">Min 8 characters. Only set if you want to change it.</p>
+                        <p className="text-xs text-muted-foreground">
+                            Min 8 characters. Only set if you want to change it.
+                        </p>
                     </div>
-                    <Button onClick={handleSave} disabled={submitting || !canSave} className="w-full">
+                    <Button
+                        onClick={handleSave}
+                        disabled={submitting || !canSave}
+                        className="w-full"
+                    >
                         {submitting ? 'Saving...' : 'Save Changes'}
                     </Button>
                 </CardContent>

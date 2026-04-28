@@ -1,6 +1,13 @@
-import { useEffect, useRef, useState } from 'react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { env } from '@/config/env';
+import { useToast } from '@/hooks/use-toast';
 import { Replayer } from '@rrweb/replay';
+import '@rrweb/replay/dist/style.css';
 import { ExternalLink, RadioTower, Wifi, WifiOff } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 interface EventWithTime {
     type: number;
@@ -8,13 +15,6 @@ interface EventWithTime {
     timestamp: number;
     [key: string]: unknown;
 }
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import '@rrweb/replay/dist/style.css';
-import { env } from '@/config/env';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useToast } from '@/hooks/use-toast';
 
 interface ReplayerInstance {
     addEvent: (event: EventWithTime) => void;
@@ -39,7 +39,10 @@ export default function Live() {
     const { toast } = useToast();
     const toastRef = useRef(toast);
 
-    const selectedSessionId = searchParams.get('session') ?? window.sessionStorage.getItem(ACTIVE_SESSION_STORAGE_KEY) ?? '';
+    const selectedSessionId =
+        searchParams.get('session') ??
+        window.sessionStorage.getItem(ACTIVE_SESSION_STORAGE_KEY) ??
+        '';
 
     useEffect(() => {
         toastRef.current = toast;
@@ -114,7 +117,10 @@ export default function Live() {
             try {
                 const hasFullSnapshot = events.some((eventItem) => eventItem.type === 2);
                 if (!hasFullSnapshot) {
-                    console.warn('[Live] Waiting for full snapshot event, buffered:', events.length);
+                    console.warn(
+                        '[Live] Waiting for full snapshot event, buffered:',
+                        events.length
+                    );
                     return;
                 }
 
@@ -145,7 +151,9 @@ export default function Live() {
                 console.log('[Live] Player initialized with', events.length, 'buffered events');
 
                 setTimeout(() => {
-                    const iframe = containerRef.current?.querySelector('iframe') as HTMLIFrameElement;
+                    const iframe = containerRef.current?.querySelector(
+                        'iframe'
+                    ) as HTMLIFrameElement;
                     if (iframe?.contentDocument?.documentElement) {
                         const recordedWidth = iframe.contentDocument.documentElement.scrollWidth;
                         const containerWidth = containerRef.current!.clientWidth - 16;
@@ -160,14 +168,18 @@ export default function Live() {
                 }, 100);
             } catch (err) {
                 console.error('[Live] Player initialization error:', err);
-                setError(`Player initialization failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
+                setError(
+                    `Player initialization failed: ${err instanceof Error ? err.message : 'Unknown error'}`
+                );
                 setStatus('error');
             }
         };
 
         connectionTimeout = setTimeout(() => {
             if (!playerReadyRef.current && !closedByCleanup) {
-                setError('No events received from the recording session. Make sure the recorder is actively sending events.');
+                setError(
+                    'No events received from the recording session. Make sure the recorder is actively sending events.'
+                );
                 setStatus('error');
             }
         }, 10000);
@@ -185,7 +197,11 @@ export default function Live() {
                     events?: unknown[];
                 };
 
-                if (!payload.events || !Array.isArray(payload.events) || payload.events.length === 0) {
+                if (
+                    !payload.events ||
+                    !Array.isArray(payload.events) ||
+                    payload.events.length === 0
+                ) {
                     if (connectionTimeout) {
                         clearTimeout(connectionTimeout);
                         connectionTimeout = null;
@@ -255,12 +271,13 @@ export default function Live() {
         };
     }, [selectedSessionId]);
 
-
     return (
         <div className="space-y-6">
             <section className="rounded-2xl border bg-card p-6 shadow-sm">
                 <h2 className="text-2xl font-semibold tracking-tight">Live co-browsing</h2>
-                <p className="text-sm text-muted-foreground">Watch the current recording session in real-time.</p>
+                <p className="text-sm text-muted-foreground">
+                    Watch the current recording session in real-time.
+                </p>
             </section>
 
             <section className="px-6">
@@ -273,16 +290,30 @@ export default function Live() {
                                     Live Stream
                                 </CardTitle>
                                 <CardDescription>
-                                    {selectedSessionId ? `Session: ${selectedSessionId.slice(0, 8)}...` : 'Waiting for session'}
+                                    {selectedSessionId
+                                        ? `Session: ${selectedSessionId.slice(0, 8)}...`
+                                        : 'Waiting for session'}
                                 </CardDescription>
                             </div>
                             <div className="flex items-center gap-2">
-                                <Badge variant={status === 'live' ? 'default' : status === 'error' ? 'destructive' : 'secondary'}>
+                                <Badge
+                                    variant={
+                                        status === 'live'
+                                            ? 'default'
+                                            : status === 'error'
+                                              ? 'destructive'
+                                              : 'secondary'
+                                    }
+                                >
                                     {status === 'live' && <Wifi className="mr-1 h-3 w-3" />}
                                     {status === 'error' && <WifiOff className="mr-1 h-3 w-3" />}
                                     {status}
                                 </Badge>
-                                <Button size="sm" variant="outline" onClick={() => navigate('/dashboard')}>
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => navigate('/dashboard')}
+                                >
                                     <ExternalLink className="mr-2 h-4 w-4" />
                                     Back
                                 </Button>
@@ -291,8 +322,16 @@ export default function Live() {
                     </CardHeader>
                     <CardContent className="space-y-3">
                         {error && <p className="text-sm text-destructive">{error}</p>}
-                        {!selectedSessionId && <p className="text-sm text-muted-foreground">No active live session available yet</p>}
-                        {status === 'connecting' && <p className="text-sm text-muted-foreground">Connecting to live session...</p>}
+                        {!selectedSessionId && (
+                            <p className="text-sm text-muted-foreground">
+                                No active live session available yet
+                            </p>
+                        )}
+                        {status === 'connecting' && (
+                            <p className="text-sm text-muted-foreground">
+                                Connecting to live session...
+                            </p>
+                        )}
                         <div
                             className="w-full overflow-auto rounded-lg border border-dashed border-border bg-background p-1"
                             ref={containerRef}
