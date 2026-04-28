@@ -14,6 +14,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { useTasks } from '@/hooks/useTasks';
 import type { Task, TaskPayload } from '@/types';
+import { formatDate } from '@/lib/utils';
 import { CheckCircle2, CircleDashed, FileText, PencilLine } from 'lucide-react';
 import { type ChangeEvent, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
@@ -155,7 +156,7 @@ export default function TaskDetail() {
                 </Card>
             </section>
 
-            <section className="grid gap-4 lg:grid-cols-[1fr_0.95fr]">
+            <section className="grid gap-4 lg:grid-cols-[3fr_2fr]">
                 <Card>
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">

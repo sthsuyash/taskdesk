@@ -6,12 +6,9 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { getSessionEvents, listSessions } from '@/services/sessionsApi';
 import type { SessionSummary } from '@/types';
+import { formatDate } from '@/lib/utils';
 import { Clock3, ListFilter, Radio, RefreshCw, ShieldCheck } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-
-function formatDate(value: number) {
-    return new Date(value).toLocaleString();
-}
 
 export default function Sessions() {
     const { sessionId, recordingState } = useRecorderStatus();
@@ -142,7 +139,7 @@ export default function Sessions() {
                 </Card>
             </section>
 
-            <section className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
+            <section className="grid gap-4 lg:grid-cols-[3fr_2fr]">
                 <Card>
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">

@@ -67,7 +67,7 @@ export default function Dashboard() {
                 </Card>
             </section>
 
-            <section className="grid gap-4 lg:grid-cols-[1.35fr_0.9fr]">
+            <section className="grid gap-4 lg:grid-cols-[3fr_2fr]">
                 <Card>
                     <CardHeader>
                         <CardTitle>Recent tasks</CardTitle>
