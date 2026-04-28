@@ -1,9 +1,11 @@
 import { apiClient } from '@/services/apiClient';
 import type { AuthUser, UserPayload, UsersResponse } from '@/types';
 
-export function listUsers(page = 1, limit = 20, role?: AuthUser['role']) {
+export function listUsers(page = 1, limit = 20, role?: AuthUser['role'], sortBy?: string, sortOrder?: string) {
     const params = new URLSearchParams({ page: String(page), limit: String(limit) });
     if (role) params.set('role', role);
+    if (sortBy) params.set('sortBy', sortBy);
+    if (sortOrder) params.set('sortOrder', sortOrder);
     return apiClient.get<UsersResponse>(`/api/users?${params}`);
 }
 
