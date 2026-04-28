@@ -1,10 +1,18 @@
-import { type PropsWithChildren, useEffect, useState, useRef } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
-import { ListTodo, LogOut, ChevronDown, User } from 'lucide-react';
+import { RecorderProvider } from '@/components/layout/RecorderContext';
+import { useSessionRecorder } from '@/hooks/useSessionRecorder';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/store/authStore';
+import { ChevronDown, Film, LayoutDashboard, ListTodo, LogOut, Radio, User } from 'lucide-react';
+import { type PropsWithChildren, useEffect, useRef, useState } from 'react';
+import { NavLink, useNavigate } from 'react-router-dom';
 
-function UserMenu({ user, onLogout }: { user: { email: string; role: string; id: string }; onLogout: () => void }) {
+function UserMenu({
+    user,
+    onLogout,
+}: {
+    user: { email: string; role: string; id: string };
+    onLogout: () => void;
+}) {
     const [open, setOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
     const navigate = useNavigate();
@@ -41,7 +49,10 @@ function UserMenu({ user, onLogout }: { user: { email: string; role: string; id:
                     </div>
                     <button
                         type="button"
-                        onClick={() => { setOpen(false); navigate('/profile'); }}
+                        onClick={() => {
+                            setOpen(false);
+                            navigate('/profile');
+                        }}
                         className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                     >
                         <User className="h-4 w-4" />
@@ -49,7 +60,10 @@ function UserMenu({ user, onLogout }: { user: { email: string; role: string; id:
                     </button>
                     <button
                         type="button"
-                        onClick={() => { setOpen(false); onLogout(); }}
+                        onClick={() => {
+                            setOpen(false);
+                            onLogout();
+                        }}
                         className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                     >
                         <LogOut className="h-4 w-4" />
@@ -65,12 +79,14 @@ export default function AppShell({ children }: PropsWithChildren) {
     const navigate = useNavigate();
     const user = useAuthStore((s) => s.user);
     const logout = useAuthStore((s) => s.logout);
+    const recorder = useSessionRecorder();
+    const { sessionId, recordingState } = recorder;
 
     useEffect(() => {
         const onKeyDown = (event: KeyboardEvent) => {
             if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
                 event.preventDefault();
-                navigate('/?action=new');
+                navigate('/tasks?action=new');
             }
         };
 
@@ -84,35 +100,98 @@ export default function AppShell({ children }: PropsWithChildren) {
     };
 
     return (
-        <div className="min-h-screen">
-            <header className="sticky top-0 z-20 border-b bg-card/80 backdrop-blur supports-[backdrop-filter]:bg-card/70">
-                <div className="container flex h-16 items-center justify-between gap-4">
-                    <div>
-                        <h1 className="text-base font-semibold tracking-tight">Task Desk</h1>
+        <RecorderProvider value={recorder}>
+            <div className="min-h-screen">
+                <header className="sticky top-0 z-20 border-b bg-card/80 backdrop-blur supports-[backdrop-filter]:bg-card/70">
+                    <div className="container flex min-h-16 flex-wrap items-center justify-between gap-4 py-3">
+                        <div className="flex items-center gap-3">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-sm font-semibold text-primary-foreground shadow-sm">
+                                TD
+                            </div>
+                            <div>
+                                <h1 className="text-base font-semibold tracking-tight">
+                                    Task Desk
+                                </h1>
+                                <p className="text-xs text-muted-foreground">
+                                    Tasks, recording, and account management
+                                </p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <nav className="hidden items-center gap-2 rounded-lg border bg-background p-1 md:flex">
+                                <NavLink
+                                    to="/"
+                                    end
+                                    className={({ isActive }) =>
+                                        cn(
+                                            'inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground',
+                                            isActive &&
+                                                'bg-primary text-primary-foreground hover:text-primary-foreground'
+                                        )
+                                    }
+                                >
+                                    <LayoutDashboard className="h-4 w-4" />
+                                    Overview
+                                </NavLink>
+                                <NavLink
+                                    to="/tasks"
+                                    className={({ isActive }) =>
+                                        cn(
+                                            'inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground',
+                                            isActive &&
+                                                'bg-primary text-primary-foreground hover:text-primary-foreground'
+                                        )
+                                    }
+                                >
+                                    <ListTodo className="h-4 w-4" />
+                                    Tasks
+                                </NavLink>
+                                <NavLink
+                                    to="/recording"
+                                    className={({ isActive }) =>
+                                        cn(
+                                            'inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground',
+                                            isActive &&
+                                                'bg-primary text-primary-foreground hover:text-primary-foreground'
+                                        )
+                                    }
+                                >
+                                    <Radio className="h-4 w-4" />
+                                    Recording
+                                </NavLink>
+                                <NavLink
+                                    to="/sessions"
+                                    className={({ isActive }) =>
+                                        cn(
+                                            'inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground',
+                                            isActive &&
+                                                'bg-primary text-primary-foreground hover:text-primary-foreground'
+                                        )
+                                    }
+                                >
+                                    <Film className="h-4 w-4" />
+                                    Sessions
+                                </NavLink>
+                            </nav>
+                            <div className="hidden items-center gap-2 rounded-full border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground sm:flex">
+                                <span
+                                    className={cn(
+                                        'h-2 w-2 rounded-full',
+                                        recordingState === 'error' ? 'bg-destructive' : 'bg-primary'
+                                    )}
+                                />
+                                {recordingState === 'error'
+                                    ? 'Recorder issue'
+                                    : sessionId
+                                      ? `Session ${sessionId.slice(0, 8)}`
+                                      : 'Recorder starting'}
+                            </div>
+                            {user && <UserMenu user={user} onLogout={handleLogout} />}
+                        </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                        <nav className="hidden items-center gap-2 rounded-lg border bg-background p-1 md:flex">
-                            <NavLink
-                                to="/"
-                                end
-                                className={({ isActive }) =>
-                                    cn(
-                                        'inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground',
-                                        isActive && 'bg-primary text-primary-foreground hover:text-primary-foreground',
-                                    )
-                                }
-                            >
-                                <ListTodo className="h-4 w-4" />
-                                Home
-                            </NavLink>
-                        </nav>
-                        {user && (
-                            <UserMenu user={user} onLogout={handleLogout} />
-                        )}
-                    </div>
-                </div>
-            </header>
-            <main className="container py-6">{children}</main>
-        </div>
+                </header>
+                <main className="container py-6">{children}</main>
+            </div>
+        </RecorderProvider>
     );
 }

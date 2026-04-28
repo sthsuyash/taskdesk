@@ -1,9 +1,8 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
-import { useLocation } from 'react-router-dom';
-import { record } from '@rrweb/record';
+import { env } from '@/config/env';
 import { createSession, postSessionEvents } from '@/services/sessionsApi';
 import type { RecorderState } from '@/types';
-import { env } from '@/config/env';
+import { record } from '@rrweb/record';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 const FLUSH_INTERVAL_MS = 500;
 const SOCKET_OPEN_TIMEOUT_MS = 5000;
@@ -16,7 +15,6 @@ type TaskDeskRecordApi = typeof record & {
 };
 
 export function useSessionRecorder() {
-    const location = useLocation();
     const [sessionId, setSessionId] = useState('');
     const [recordingState, setRecordingState] = useState<RecorderState>('initializing');
     const pendingEventsRef = useRef<unknown[]>([]);
@@ -37,7 +35,7 @@ export function useSessionRecorder() {
             return;
         }
         try {
-            (record as RrwebRecordApi).addCustomEvent?.(tag, payload);
+            (record as TaskDeskRecordApi).addCustomEvent?.(tag, payload);
         } catch (error) {
             console.warn('[Recorder] Failed to add custom event:', error);
         }
@@ -85,7 +83,10 @@ export function useSessionRecorder() {
                 // pendingEventsRef still holds those events because flushToLiveSocket bails early
                 // (without splicing) when the socket is not yet OPEN.
                 if (pendingEventsRef.current.length > 0) {
-                    const batch = pendingEventsRef.current.splice(0, pendingEventsRef.current.length);
+                    const batch = pendingEventsRef.current.splice(
+                        0,
+                        pendingEventsRef.current.length
+                    );
                     socket.send(JSON.stringify({ events: batch }));
                 }
 
@@ -114,12 +115,19 @@ export function useSessionRecorder() {
                     reject(new Error(`Live WebSocket closed before opening (${event.code})`));
                 }
 
-                if (closedByCleanup || isUnmountedRef.current || isCleanupRef.current || !sessionIdRef.current) {
+                if (
+                    closedByCleanup ||
+                    isUnmountedRef.current ||
+                    isCleanupRef.current ||
+                    !sessionIdRef.current
+                ) {
                     return;
                 }
 
                 if (reconnectAttemptsRef.current >= MAX_RECONNECT_ATTEMPTS) {
-                    console.error('[Recorder] Reconnect attempts exhausted. Recorder transport unavailable.');
+                    console.error(
+                        '[Recorder] Reconnect attempts exhausted. Recorder transport unavailable.'
+                    );
                     return;
                 }
 
@@ -127,7 +135,9 @@ export function useSessionRecorder() {
                 const attempt = reconnectAttemptsRef.current;
                 const delay = RECONNECT_BASE_DELAY_MS * attempt;
 
-                console.warn(`[Recorder] Reconnecting to live WebSocket (attempt ${attempt}/${MAX_RECONNECT_ATTEMPTS}) in ${delay}ms`);
+                console.warn(
+                    `[Recorder] Reconnecting to live WebSocket (attempt ${attempt}/${MAX_RECONNECT_ATTEMPTS}) in ${delay}ms`
+                );
                 window.setTimeout(() => {
                     if (isUnmountedRef.current || isCleanupRef.current || !sessionIdRef.current) {
                         return;
@@ -144,12 +154,6 @@ export function useSessionRecorder() {
     }, []);
 
     useEffect(() => {
-        if (location.pathname !== '/') {
-            setSessionId('');
-            setRecordingState('initializing');
-            return;
-        }
-
         let isUnmounted = false;
         let stopRecording: (() => void) | null = null;
         let intervalId: number | null = null;
@@ -191,7 +195,10 @@ export function useSessionRecorder() {
                     try {
                         await connectLiveSocket(id);
                     } catch (error) {
-                        console.warn('[Recorder] Live socket unavailable, REST fallback will be used:', error);
+                        console.warn(
+                            '[Recorder] Live socket unavailable, REST fallback will be used:',
+                            error
+                        );
                     }
                     return id;
                 } catch (error) {
@@ -263,10 +270,6 @@ export function useSessionRecorder() {
         };
 
         const init = async () => {
-            if (location.pathname !== '/') {
-                return;
-            }
-
             const startTime = performance.now();
             try {
                 const sid = await ensureSession();
@@ -352,7 +355,7 @@ export function useSessionRecorder() {
             window.sessionStorage.removeItem(ACTIVE_SESSION_STORAGE_KEY);
             void flush(false);
         };
-    }, [connectLiveSocket, location]);
+    }, [connectLiveSocket]);
 
     return {
         sessionId,
