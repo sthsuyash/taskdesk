@@ -36,7 +36,7 @@ export default function Recording() {
                 </div>
             </section>
 
-            <section className="grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
+            <section className="grid gap-4 lg:grid-cols-[3fr_2fr]">
                 <Card>
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">

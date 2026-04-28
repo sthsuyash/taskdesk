@@ -28,65 +28,38 @@ ReactDOM.createRoot(rootElement).render(
                     <Route path="/login" element={<Login />} />
                     <Route path="/register" element={<Register />} />
                     <Route
-                        path="/profile"
-                        element={
-                            <RequireAuth>
-                                <AppShell>
-                                    <Profile />
-                                </AppShell>
-                            </RequireAuth>
-                        }
-                    />
-                    <Route
                         path="/"
                         element={
                             <RequireAuth>
-                                <AppShell>
-                                    <Dashboard />
-                                </AppShell>
+                                <AppShell />
                             </RequireAuth>
                         }
-                    />
-                    <Route
-                        path="/tasks"
-                        element={
-                            <RequireAuth>
-                                <AppShell>
-                                    <Tasks />
-                                </AppShell>
-                            </RequireAuth>
-                        }
-                    />
-                    <Route
-                        path="/tasks/:taskId"
-                        element={
-                            <RequireAuth>
-                                <AppShell>
-                                    <TaskDetail />
-                                </AppShell>
-                            </RequireAuth>
-                        }
-                    />
-                    <Route
-                        path="/sessions"
-                        element={
-                            <RequireAuth>
-                                <AppShell>
-                                    <Sessions />
-                                </AppShell>
-                            </RequireAuth>
-                        }
-                    />
-                    <Route
-                        path="/recording"
-                        element={
-                            <RequireAuth>
-                                <AppShell>
-                                    <Recording />
-                                </AppShell>
-                            </RequireAuth>
-                        }
-                    />
+                    >
+                        <Route
+                            index
+                            element={<Dashboard />}
+                        />
+                        <Route
+                            path="profile"
+                            element={<Profile />}
+                        />
+                        <Route
+                            path="tasks"
+                            element={<Tasks />}
+                        />
+                        <Route
+                            path="tasks/:taskId"
+                            element={<TaskDetail />}
+                        />
+                        <Route
+                            path="sessions"
+                            element={<Sessions />}
+                        />
+                        <Route
+                            path="recording"
+                            element={<Recording />}
+                        />
+                    </Route>
                     <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
                 <Toaster />
