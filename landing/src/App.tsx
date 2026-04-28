@@ -1,26 +1,26 @@
-import { ArrowRight, BookOpen, CirclePlay, LayoutDashboard, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { env } from '@/config/env';
+import { ArrowRight, BookOpen, CirclePlay, LayoutDashboard, ShieldCheck } from 'lucide-react';
 import { Link } from 'react-router-dom';
-
-const APP_URL = import.meta.env.VITE_APP_URL || 'http://localhost:5174';
-const DASHBOARD_URL = import.meta.env.VITE_DASHBOARD_URL || 'http://localhost:5175';
-const DOCS_URL = import.meta.env.VITE_DOCS_URL || 'http://localhost:3000';
 
 const highlights = [
     {
         title: 'Capture Every Customer Journey',
-        description: 'Replay complete user sessions with high-fidelity TaskDesk events and page-level timeline context.',
+        description:
+            'Replay complete user sessions with high-fidelity TaskDesk events and page-level timeline context.',
         icon: CirclePlay,
     },
     {
         title: 'Separate Admin Surface',
-        description: 'Support operations live in a dedicated dashboard experience with role-gated access.',
+        description:
+            'Support operations live in a dedicated dashboard experience with role-gated access.',
         icon: LayoutDashboard,
     },
     {
         title: 'Secure By Default',
-        description: 'Cookie-backed auth, scoped access controls, and clean app boundaries across all surfaces.',
+        description:
+            'Cookie-backed auth, scoped access controls, and clean app boundaries across all surfaces.',
         icon: ShieldCheck,
     },
 ];
@@ -30,7 +30,10 @@ export default function App() {
         <div className="min-h-screen flex flex-col">
             <header className="border-b bg-card/80 backdrop-blur sticky top-0 z-50">
                 <div className="container flex h-16 items-center">
-                    <Link to="/" className="text-sm font-semibold tracking-tight hover:opacity-80 transition-opacity">
+                    <Link
+                        to="/"
+                        className="text-sm font-semibold tracking-tight hover:opacity-80 transition-opacity"
+                    >
                         TaskDesk
                     </Link>
                 </div>
@@ -43,20 +46,23 @@ export default function App() {
                             Understand users before jumping on a call.
                         </h1>
                         <p className="text-lg text-muted-foreground leading-relaxed max-w-2xl mb-8">
-                            One focused landing, one customer app, one admin console. Keep each surface intentional while sharing a unified identity and event model.
+                            One focused landing, one customer app, one admin console. Keep each
+                            surface intentional while sharing a unified identity and event model.
                         </p>
                         <div className="flex flex-wrap gap-3">
-                            <Link to={APP_URL}>
+                            <Link to={env.appUrl}>
                                 <Button size="lg">
                                     Start in App
                                     <ArrowRight className="ml-2 h-4 w-4" />
                                 </Button>
                             </Link>
-                            <Link to={DASHBOARD_URL}>
-                                <Button size="lg" variant="outline">Dashboard</Button>
+                            <Link to={env.dashboardUrl}>
+                                <Button size="lg" variant="outline">
+                                    Dashboard
+                                </Button>
                             </Link>
-                            <Link to={DOCS_URL}>
-                                <Button size="lg" variant="ghost">
+                            <Link to={env.docsUrl}>
+                                <Button size="lg" variant="outline">
                                     <BookOpen className="mr-2 h-4 w-4" />
                                     Documentation
                                 </Button>
@@ -78,7 +84,9 @@ export default function App() {
                                         </CardTitle>
                                     </CardHeader>
                                     <CardContent>
-                                        <CardDescription className="text-sm">{item.description}</CardDescription>
+                                        <CardDescription className="text-sm">
+                                            {item.description}
+                                        </CardDescription>
                                     </CardContent>
                                 </Card>
                             );
