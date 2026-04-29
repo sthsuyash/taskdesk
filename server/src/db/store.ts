@@ -671,7 +671,9 @@ async listSessions(actor, page = 1, limit = 50) {
         },
 
 async listTasks(actor, page = 1, limit = 20, status?: TaskStatus) {
-            const offset = (page - 1) * limit;
+            const limitNum = Number(limit) || 20;
+            const pageNum = Number(page) || 1;
+            const offsetNum = (pageNum - 1) * limitNum;
             const baseQuery = actor?.role === 'admin' || actor?.role === 'support'
                 ? { text: 'SELECT id, title, description, status, created_at, updated_at, user_id FROM tasks', countText: 'SELECT COUNT(*) FROM tasks' }
                 : { text: 'SELECT id, title, description, status, created_at, updated_at, user_id FROM tasks WHERE user_id = $1', countText: 'SELECT COUNT(*) FROM tasks WHERE user_id = $1', param: [actor?.id || defaultOwnerUserId || ''] };
@@ -687,11 +689,11 @@ async listTasks(actor, page = 1, limit = 20, status?: TaskStatus) {
 
             const [countResult, tasksResult] = await Promise.all([
                 pool.query(`${baseQuery.countText}${whereClause ? ' WHERE' + whereClause.split(' WHERE ')[1] : ''}`, params),
-                pool.query(`${baseQuery.text}${whereClause} ORDER BY created_at DESC LIMIT $1 OFFSET $2`, [limit, offset]),
+                pool.query(`${baseQuery.text}${whereClause} ORDER BY created_at DESC LIMIT $1::int OFFSET $2::int`, [limitNum, offsetNum]),
             ]);
 
             const total = parseInt(countResult.rows[0]?.count || '0', 10);
-            return { tasks: tasksResult.rows.map(mapTaskRow), total, page, limit, totalPages: Math.ceil(total / limit) };
+            return { tasks: tasksResult.rows.map(mapTaskRow), total, page: pageNum, limit: limitNum, totalPages: Math.ceil(total / limitNum) };
         },
 
         async createTask(payload, actor) {

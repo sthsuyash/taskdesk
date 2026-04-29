@@ -183,6 +183,10 @@ export function createApiRouter({ store, broadcastToViewers }: ApiRouterDependen
         const limit = Math.min(100, Math.max(1, parseInt(String(req.query.limit), 10) || 20));
         const status = req.query.status as TaskStatus | undefined;
 
+        if (isNaN(page) || isNaN(limit)) {
+            return res.status(400).json({ error: 'Invalid pagination parameters' });
+        }
+
         const result = await store.listTasks(actor, page, limit, status);
         res.json(result);
     });
