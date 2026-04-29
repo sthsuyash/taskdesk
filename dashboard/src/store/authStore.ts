@@ -1,9 +1,11 @@
+import { setAuthToken } from '@/services/apiClient';
 import { getCurrentUser, login as loginRequest, logout as logoutRequest } from '@/services/authApi';
 import type { AuthUser, LoginPayload } from '@/types';
 import { create } from 'zustand';
 
 interface AuthState {
     user: AuthUser | null;
+    token: string | null;
     loading: boolean;
     refreshUser: () => Promise<void>;
     login: (payload: LoginPayload) => Promise<AuthUser>;
@@ -12,6 +14,7 @@ interface AuthState {
 
 export const useAuthStore = create<AuthState>((set) => ({
     user: null,
+    token: null,
     loading: true,
 
     refreshUser: async () => {
@@ -25,7 +28,8 @@ export const useAuthStore = create<AuthState>((set) => ({
 
     login: async (payload: LoginPayload) => {
         const response = await loginRequest(payload);
-        set({ user: response.user });
+        setAuthToken(response.token);
+        set({ user: response.user, token: response.token });
         return response.user;
     },
 
@@ -33,7 +37,8 @@ export const useAuthStore = create<AuthState>((set) => ({
         try {
             await logoutRequest();
         } finally {
-            set({ user: null });
+            setAuthToken(null);
+            set({ user: null, token: null });
         }
     },
 }));

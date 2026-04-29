@@ -3,10 +3,12 @@ import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/store/authStore';
 import {
     ChevronDown,
+    FileText,
     LayoutDashboard,
     ListTodo,
     LogOut,
     RadioTower,
+    Shield,
     User,
     Users,
 } from 'lucide-react';
@@ -158,6 +160,32 @@ export default function AppShell({ children }: PropsWithChildren) {
                                     Users
                                 </NavLink>
                             )}
+                            <NavLink
+                                to="/roles"
+                                className={({ isActive }) =>
+                                    cn(
+                                        'inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground',
+                                        isActive &&
+                                            'bg-primary text-primary-foreground hover:text-primary-foreground'
+                                    )
+                                }
+                            >
+                                <Shield className="h-4 w-4" />
+                                Roles
+                            </NavLink>
+                            <NavLink
+                                to="/audit"
+                                className={({ isActive }) =>
+                                    cn(
+                                        'inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground',
+                                        isActive &&
+                                            'bg-primary text-primary-foreground hover:text-primary-foreground'
+                                    )
+                                }
+                            >
+                                <FileText className="h-4 w-4" />
+                                Audit
+                            </NavLink>
                         </nav>
                         {user && <UserMenu user={user} onLogout={handleLogout} />}
                     </div>

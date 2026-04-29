@@ -9,7 +9,11 @@
     "isolatedModules": true,
     "jsx": "react-jsx",
     "noEmit": true,
-    "strict": false,
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
     "skipLibCheck": true,
     "types": ["vite/client"],
     "paths": {

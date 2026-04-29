@@ -13,6 +13,8 @@ const Dashboard = lazy(() => import('@/pages/Dashboard'));
 const Live = lazy(() => import('@/pages/Live'));
 const Tasks = lazy(() => import('@/pages/Tasks'));
 const Users = lazy(() => import('@/pages/Users'));
+const Roles = lazy(() => import('@/pages/Roles'));
+const AuditLogs = lazy(() => import('@/pages/AuditLogs'));
 const Profile = lazy(() => import('@/pages/Profile'));
 
 function PageFallback() {
@@ -89,6 +91,30 @@ ReactDOM.createRoot(rootElement).render(
                                 <AppShell>
                                     <Suspense fallback={<PageFallback />}>
                                         <Users />
+                                    </Suspense>
+                                </AppShell>
+                            </RequireAdmin>
+                        }
+                    />
+                    <Route
+                        path="/roles"
+                        element={
+                            <RequireAdmin>
+                                <AppShell>
+                                    <Suspense fallback={<PageFallback />}>
+                                        <Roles />
+                                    </Suspense>
+                                </AppShell>
+                            </RequireAdmin>
+                        }
+                    />
+                    <Route
+                        path="/audit"
+                        element={
+                            <RequireAdmin>
+                                <AppShell>
+                                    <Suspense fallback={<PageFallback />}>
+                                        <AuditLogs />
                                     </Suspense>
                                 </AppShell>
                             </RequireAdmin>
