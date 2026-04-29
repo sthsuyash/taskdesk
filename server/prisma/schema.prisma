@@ -1,0 +1,125 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Role {
+  id          String       @id // "admin", "support", "user"
+  name        String       @unique
+  description String?
+  level       Int          @default(0) // 100=admin, 50=support, 1=user
+  permissions Permission[]
+  users       User[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model Permission {
+  id     String @id // "task:create", "user:delete", etc.
+  name   String @unique
+  roleId String
+  role   Role   @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@index([roleId])
+}
+
+model TaskStatus {
+  id    String @id // "todo", "done", "in_progress", "blocked"
+  name  String @unique
+  tasks Task[]
+}
+
+model User {
+  id           String        @id @default(uuid())
+  email        String        @unique
+  passwordSalt String
+  passwordHash String
+  roleId       String        @default("user")
+  role         Role          @relation(fields: [roleId], references: [id])
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  authSessions AuthSession[]
+  tasks        Task[]
+  sessions    Session[]
+  auditLogs    AuditLog[]
+
+  @@index([roleId])
+  @@index([email])
+  @@index([createdAt])
+}
+
+model AuthSession {
+  id        String   @id
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  lastSeenAt DateTime @default(now())
+  expiresAt  DateTime
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model Task {
+  id           String      @id @default(uuid())
+  title        String
+  description String      @default("")
+  statusId     String      @default("todo")
+  status      TaskStatus  @relation(fields: [statusId], references: [id])
+  userId      String?
+  user        User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([statusId])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model Session {
+  id           String        @id @default(uuid())
+  url          String        @default("unknown")
+  userAgent    String        @default("")
+  ipAddress    String        @default("")
+  startedAt   DateTime      @default(now())
+  lastEventAt DateTime     @default(now())
+  eventCount  Int           @default(0)
+  userId      String?
+  user        User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+  sessionEvent SessionEvent?
+
+  @@index([userId])
+  @@index([startedAt])
+  @@index([lastEventAt])
+}
+
+model SessionEvent {
+  id        String   @id @default(uuid())
+  sessionId String   @unique
+  session   Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  events    Json
+  createdAt DateTime @default(now())
+
+  @@index([sessionId])
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action     String   // "created", "updated", "deleted", "login", "logout"
+  entityType String   // "Task", "User", "Session", "AuthSession"
+  entityId   String?
+  details    Json?
+  ipAddress  String?
+  userAgent  String?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
