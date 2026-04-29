@@ -1,7 +1,7 @@
+import { env } from '@/config/env';
 import swaggerJsdoc from 'swagger-jsdoc';
-import type { Options } from 'swagger-jsdoc';
 
-const swaggerOptions: Options = {
+const swaggerOptions = {
     definition: {
         openapi: '3.0.0',
         info: {
@@ -20,7 +20,7 @@ const swaggerOptions: Options = {
                 cookieAuth: {
                     type: 'apiKey',
                     in: 'cookie',
-                    name: 'session_token',
+                    name: env.authCookieName,
                 },
             },
             schemas: {
@@ -160,7 +160,11 @@ const swaggerOptions: Options = {
                     parameters: [
                         { name: 'page', in: 'query', schema: { type: 'integer', default: 1 } },
                         { name: 'limit', in: 'query', schema: { type: 'integer', default: 20 } },
-                        { name: 'status', in: 'query', schema: { type: 'string', enum: ['todo', 'done'] } },
+                        {
+                            name: 'status',
+                            in: 'query',
+                            schema: { type: 'string', enum: ['todo', 'done'] },
+                        },
                     ],
                     responses: {
                         200: {
@@ -170,7 +174,10 @@ const swaggerOptions: Options = {
                                     schema: {
                                         type: 'object',
                                         properties: {
-                                            tasks: { type: 'array', items: { $ref: '#/components/schemas/Task' } },
+                                            tasks: {
+                                                type: 'array',
+                                                items: { $ref: '#/components/schemas/Task' },
+                                            },
                                             total: { type: 'integer' },
                                             page: { type: 'integer' },
                                             limit: { type: 'integer' },
@@ -219,7 +226,9 @@ const swaggerOptions: Options = {
                     summary: 'Update task',
                     tags: ['Tasks'],
                     security: [{ cookieAuth: [] }],
-                    parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+                    parameters: [
+                        { name: 'id', in: 'path', required: true, schema: { type: 'string' } },
+                    ],
                     requestBody: {
                         content: {
                             'application/json': {
@@ -249,7 +258,9 @@ const swaggerOptions: Options = {
                     summary: 'Delete task',
                     tags: ['Tasks'],
                     security: [{ cookieAuth: [] }],
-                    parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+                    parameters: [
+                        { name: 'id', in: 'path', required: true, schema: { type: 'string' } },
+                    ],
                     responses: {
                         200: { description: 'Task deleted' },
                     },
@@ -272,7 +283,12 @@ const swaggerOptions: Options = {
                                     schema: {
                                         type: 'object',
                                         properties: {
-                                            sessions: { type: 'array', items: { $ref: '#/components/schemas/SessionSummary' } },
+                                            sessions: {
+                                                type: 'array',
+                                                items: {
+                                                    $ref: '#/components/schemas/SessionSummary',
+                                                },
+                                            },
                                             total: { type: 'integer' },
                                         },
                                     },
@@ -318,7 +334,9 @@ const swaggerOptions: Options = {
                     summary: 'Get session events',
                     tags: ['Sessions'],
                     security: [{ cookieAuth: [] }],
-                    parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+                    parameters: [
+                        { name: 'id', in: 'path', required: true, schema: { type: 'string' } },
+                    ],
                     responses: {
                         200: {
                             description: 'Events list',
@@ -337,7 +355,9 @@ const swaggerOptions: Options = {
                     summary: 'Post session events',
                     tags: ['Sessions'],
                     security: [{ cookieAuth: [] }],
-                    parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+                    parameters: [
+                        { name: 'id', in: 'path', required: true, schema: { type: 'string' } },
+                    ],
                     requestBody: {
                         required: true,
                         content: {
@@ -379,7 +399,11 @@ const swaggerOptions: Options = {
                     parameters: [
                         { name: 'page', in: 'query', schema: { type: 'integer', default: 1 } },
                         { name: 'limit', in: 'query', schema: { type: 'integer', default: 20 } },
-                        { name: 'role', in: 'query', schema: { type: 'string', enum: ['user', 'support', 'admin'] } },
+                        {
+                            name: 'role',
+                            in: 'query',
+                            schema: { type: 'string', enum: ['user', 'support', 'admin'] },
+                        },
                     ],
                     responses: {
                         200: { description: 'User list' },
@@ -399,7 +423,10 @@ const swaggerOptions: Options = {
                                     properties: {
                                         email: { type: 'string', format: 'email' },
                                         password: { type: 'string' },
-                                        role: { type: 'string', enum: ['user', 'support', 'admin'] },
+                                        role: {
+                                            type: 'string',
+                                            enum: ['user', 'support', 'admin'],
+                                        },
                                     },
                                 },
                             },

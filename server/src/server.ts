@@ -1,17 +1,18 @@
-import { type Server, createServer } from 'http';
-import { createApp } from '@/app/createApp.js';
-import { env } from '@/config/env.js';
-import { createStore } from '@/db/store.js';
-import { createLiveServer } from '@/live/createLiveServer.js';
-import { createApiRouter } from '@/routes/apiRouter.js';
+import { createApp } from '@/app';
+import { env } from '@/config/env';
+import { Container } from '@/container';
+import { seedBootstrapUsers } from '@/infrastructure/db/seed';
+import { createLiveServer } from '@/infrastructure/live/LiveServer';
+import { prisma } from '@/lib/prisma';
+import { createApiRouter } from '@/routes/api';
+import { createServer } from 'http';
 
 const DB_INIT_MAX_RETRIES = 10;
 const DB_INIT_RETRY_DELAY_MS = 1000;
 
-async function waitForDatabase(connectionString: string, attempt = 1): Promise<boolean> {
+async function waitForDatabase(attempt = 1): Promise<boolean> {
     try {
-        const store = await createStore({ connectionString });
-        await store.close();
+        await prisma.$connect();
         return true;
     } catch (error) {
         if (attempt >= DB_INIT_MAX_RETRIES) {
@@ -25,20 +26,19 @@ async function waitForDatabase(connectionString: string, attempt = 1): Promise<b
             `[DB] Connection attempt ${attempt}/${DB_INIT_MAX_RETRIES} failed, retrying in ${delay}ms...`
         );
         await new Promise((resolve) => setTimeout(resolve, delay));
-        return waitForDatabase(connectionString, attempt + 1);
+        return waitForDatabase(attempt + 1);
     }
 }
 
 export async function startServer() {
     console.log('[DB] Waiting for database connection...');
-    const dbReady = await waitForDatabase(env.databaseUrl);
+    const dbReady = await waitForDatabase();
     if (!dbReady) {
         process.exit(1);
     }
     console.log('[DB] Database connected successfully');
 
-    const store = await createStore({
-        connectionString: env.databaseUrl,
+    const bootstrapConfig = {
         bootstrapAdmin: {
             email: env.adminSeedEmail,
             password: env.adminSeedPassword,
@@ -47,27 +47,32 @@ export async function startServer() {
             email: env.supportSeedEmail,
             password: env.supportSeedPassword,
         },
-    });
+    };
 
-    let broadcastToViewers: (sessionId: string, events: unknown[]) => void = () => {};
-    const apiRouter = createApiRouter({
-        store,
-        broadcastToViewers: (sessionId, events) => broadcastToViewers(sessionId, events),
-    });
+    await seedBootstrapUsers(prisma, bootstrapConfig);
+
+    const container = new Container(prisma);
+    const apiRouter = createApiRouter(container);
 
     const app = createApp({
+        container,
         apiRouter,
         allowedOrigins: env.allowedOrigins,
     });
 
     const server = createServer(app);
-    const liveServer = createLiveServer({ server, store });
-    broadcastToViewers = liveServer.broadcastToViewers;
+    const liveServer = createLiveServer({
+        server,
+        authService: container.authService,
+        sessionService: container.sessionService,
+    });
+
+    container.setBroadcast(liveServer.broadcastToViewers);
 
     const shutdown = async () => {
         console.log('\nShutting down cleanly...');
         liveServer.close();
-        await store.close();
+        await prisma.$disconnect();
         server.close(() => {
             process.exit(0);
         });
@@ -81,39 +86,17 @@ export async function startServer() {
             server.listen(env.port, () => {
                 console.log(`
 TaskDesk server running on http://localhost:${env.port}
-Database: ${env.databaseUrl}
+Database: connected
 
 API:
   Tasks     -> http://localhost:${env.port}/api/tasks
-  Sessions -> http://localhost:${env.port}/api/sessions
+  Sessions  -> http://localhost:${env.port}/api/sessions
 `);
                 resolve();
             });
         });
     };
 
-    const waitForServerReady = async (maxAttempts = 20, delayMs = 250): Promise<boolean> => {
-        for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-            try {
-                const response = await fetch(`http://localhost:${env.port}/api/health`, {
-                    method: 'GET',
-                });
-                if (response.ok || response.status === 404) {
-                    return true;
-                }
-            } catch {
-                // Server not ready yet
-            }
-            await new Promise((r) => setTimeout(r, delayMs));
-        }
-        return false;
-    };
-
     await startHttpServer();
-    const ready = await waitForServerReady();
-    if (!ready) {
-        console.warn('[WARN] Server started but health check not confirmed, proceeding anyway...');
-    }
-
-    return { server, store, liveServer };
+    return { server, container, liveServer };
 }
